@@ -1,6 +1,6 @@
 ﻿using System;
 using BattleTech;
-using Harmony;
+using HarmonyLib;
 using UnityEngine;
 
 namespace ArmorRepair
@@ -21,11 +21,11 @@ namespace ArmorRepair
     [HarmonyPatch(MethodType.Constructor)]
     public static class WorkOrderEntry_ModifyMechArmor_Patch
     {
-        private static void Prefix(ref int cbillCost, ref int techCost, int desiredFrontArmor, int desiredRearArmor)
+        private static void Prefix(ref bool __runOriginal, ref int cbillCost, ref int techCost, int desiredFrontArmor, int desiredRearArmor)
         {
             try
             {
-
+                if (__runOriginal == false) { return; }
                 float techCostModifier = 0.01f; // Modify int based armor techCosts to a pseudo float
                 float num = techCost * techCostModifier;
                 techCost = Mathf.CeilToInt(num);

@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using BattleTech;
-using Harmony;
+using HarmonyLib;
+using Localize;
 
 namespace ArmorRepair
 {
     [HarmonyPatch(typeof(MechValidationRules), "ValidateMechTonnage")]
     public static class MechValidationRules_ValidateMechTonnage_Patch
     {
-        public static void Postfix(MechDef mechDef, ref Dictionary<MechValidationType, List<string>> errorMessages)
+        public static void Postfix(MechDef mechDef, ref Dictionary<MechValidationType, List<Text>> errorMessages)
         {
             try
             {
@@ -18,7 +19,7 @@ namespace ArmorRepair
                     if (mechComponentRef.DamageLevel == ComponentDamageLevel.Destroyed)
                     {
                         Logger.LogDebug("Flagging destroyed component warning: " + mechDef.Name);
-                        errorMessages[MechValidationType.Underweight].Add(string.Format("DESTROYED COMPONENT: 'Mech has destroyed components", new object[0]));
+                        errorMessages[MechValidationType.Underweight].Add(new Text("DESTROYED COMPONENT: 'Mech has destroyed components"));
                         break;
                     }
                 }

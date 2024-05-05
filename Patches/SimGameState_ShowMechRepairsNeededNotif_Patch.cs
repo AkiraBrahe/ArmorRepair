@@ -1,21 +1,22 @@
 ﻿using BattleTech;
-using Harmony;
+using HarmonyLib;
 
 namespace ArmorRepair
 {
     [HarmonyPatch(typeof(SimGameState), "ShowMechRepairsNeededNotif")]
     public static class SimGameState_ShowMechRepairsNeededNotif_Patch
     {
-        public static bool Prefx(SimGameState __instance)
+        public static void Prefx(ref bool __runOriginal, SimGameState __instance)
         {
+            if (__runOriginal == false) { return; }
             if (ArmorRepair.ModSettings.enableAutoRepairPrompt)
             {
                 __instance.CompanyStats.Set<int>("COMPANY_NotificationViewed_BattleMechRepairsNeeded", __instance.DaysPassed);
-                return false; // Suppress original method
+                __runOriginal = false; // Suppress original method
             }
             else
             {
-                return true; // Do nothing if the player isn't using our Yang prompt functionality.
+                __runOriginal = true; // Do nothing if the player isn't using our Yang prompt functionality.
             }
 
         }

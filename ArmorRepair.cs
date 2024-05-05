@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Reflection;
-using Harmony;
+using HarmonyLib;
 using Newtonsoft.Json;
 
 namespace ArmorRepair
@@ -19,7 +19,7 @@ namespace ArmorRepair
 
             Logger.LogInfo("Mod Initialising...");
 
-            var harmony = HarmonyInstance.Create("io.github.citizenSnippy.ArmorRepair");
+            var harmony = new Harmony("io.github.citizenSnippy.ArmorRepair");
             harmony.PatchAll(Assembly.GetExecutingAssembly());
             CustomComponents.Registry.RegisterSimpleCustomComponents(Assembly.GetExecutingAssembly());
             

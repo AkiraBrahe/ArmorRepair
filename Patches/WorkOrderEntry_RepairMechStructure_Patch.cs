@@ -1,6 +1,6 @@
 ﻿using System;
 using BattleTech;
-using Harmony;
+using HarmonyLib;
 
 namespace ArmorRepair
 {
@@ -18,10 +18,11 @@ namespace ArmorRepair
     [HarmonyPatch(MethodType.Constructor)]
     public static class WorkOrderEntry_RepairMechStructure_Patch
     {
-        private static void Prefix(ref int cbillCost, ref int techCost, int structureAmount)
+        private static void Prefix(ref bool __runOriginal,ref int cbillCost, ref int techCost, int structureAmount)
         {
             try
             {
+                if (__runOriginal == false) { return; }
                 Logger.LogDebug("Structure WO Costing: ");
                 Logger.LogDebug("*********************");
                 Logger.LogDebug("techCost: " + techCost);

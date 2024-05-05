@@ -1,5 +1,5 @@
 ﻿using System;
-using Harmony;
+using HarmonyLib;
 using BattleTech;
 using UnityEngine;
 using System.Linq;
@@ -18,11 +18,12 @@ namespace ArmorRepair
     public static class SimGameState_RestoreMechPostCombat_Patch
     {
 
-        public static bool Prefix(SimGameState __instance, MechDef mech)
+        public static void Prefix(ref bool __runOriginal, SimGameState __instance, MechDef mech)
         {
             try
             {
-                // Start of analysing a mech for armor repair
+                if (__runOriginal == false) { return; }
+                // Start of analysing a mech for armor repair                
                 Logger.LogInfo("Analysing Mech: " + mech.Name);
                 Logger.LogInfo("============================================");
 
@@ -251,12 +252,14 @@ namespace ArmorRepair
                     }
                 }
 
-                return false; // Finally, prevent firing the original method
+                __runOriginal = false; // Finally, prevent firing the original method
+                return;
             }
             catch (Exception ex)
             {
                 Logger.LogError(ex);
-                return true; // Allow original method to fire if there is an exception
+                SimGameState.logger.LogException(ex);
+                __runOriginal = true; // Allow original method to fire if there is an exception
             }
         }
     }

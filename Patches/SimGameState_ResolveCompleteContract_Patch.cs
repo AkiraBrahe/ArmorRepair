@@ -2,7 +2,7 @@
 using System.Linq;
 using BattleTech;
 using BattleTech.UI;
-using Harmony;
+using HarmonyLib;
 using UnityEngine;
 
 namespace ArmorRepair
@@ -12,8 +12,9 @@ namespace ArmorRepair
     {
 
         // Just for safety, ensure the temp queue in this mod is completely clear before we run any processing
-        public static bool Prefix(SimGameState __instance)
+        public static void Prefix(ref bool __runOriginal, SimGameState __instance)
         {
+            if (__runOriginal == false) { return; }
             try
             {
                 Globals.tempMechLabQueue.Clear();
@@ -21,10 +22,7 @@ namespace ArmorRepair
             catch (Exception ex)
             {
                 Logger.LogError(ex);
-                return true;
             }
-
-            return true; // Allow original method to fire
         }
 
         // Run after completion of contracts and queue up any orders in the temp queue into the game's Mech Lab queue 

@@ -1,7 +1,7 @@
 ﻿using System;
 using BattleTech;
 using CustomComponents;
-using Harmony;
+using HarmonyLib;
 using UnityEngine;
 
 namespace ArmorRepair
