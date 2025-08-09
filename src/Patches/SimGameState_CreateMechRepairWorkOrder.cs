@@ -1,16 +1,16 @@
-﻿using System;
-using BattleTech;
+﻿using BattleTech;
 using CustomComponents;
 using HarmonyLib;
+using System;
 using UnityEngine;
 
-namespace ArmorRepair
+namespace ArmorRepair.Patches
 {
     [HarmonyPatch(typeof(SimGameState), "CreateMechRepairWorkOrder")]
-    public static class SimGameState_CreateMechRepairWorkOrder_Patch
+    public static class SimGameState_CreateMechRepairWorkOrder
     {
 
-        private static void Postfix(ref SimGameState __instance, ref string mechSimGameUID, ref ChassisLocations location, ref int structureCount, ref WorkOrderEntry_RepairMechStructure __result)
+        private static void Postfix(ref SimGameState __instance, ref string mechSimGameUID, ref ChassisLocations location, ref int structureCount, ref BattleTech.WorkOrderEntry_RepairMechStructure __result)
         {
             try
             {
@@ -103,7 +103,7 @@ namespace ArmorRepair
                 Logger.LogDebug(" cBill cost: " + cbillCost);
                 Logger.LogDebug("***************************************");
 
-                __result = new WorkOrderEntry_RepairMechStructure(id, string.Format("Repair 'Mech - {0}", location.ToString()), mechSimGameUID, techCost, location, structureCount, cbillCost, string.Empty);
+                __result = new BattleTech.WorkOrderEntry_RepairMechStructure(id, string.Format("Repair 'Mech - {0}", location.ToString()), mechSimGameUID, techCost, location, structureCount, cbillCost, string.Empty);
 
             }
             catch (Exception ex)

@@ -2,7 +2,7 @@
 using HarmonyLib;
 using UnityEngine;
 
-namespace ArmorRepair
+namespace ArmorRepair.Patches
 {
     [HarmonyPatch(typeof(SimGameState), "CreateComponentInstallWorkOrder")]
     public static class SimGameState_CreateComponentInstallWorkOrder
@@ -10,7 +10,7 @@ namespace ArmorRepair
         [HarmonyPostfix]
         [HarmonyPriority(Priority.Low)]
         public static void ChangeCost(string mechSimGameUID,
-            MechComponentRef mechComponent, ChassisLocations newLocation, 
+            MechComponentRef mechComponent, ChassisLocations newLocation,
             ChassisLocations previousLocation, ref WorkOrderEntry_InstallComponent __result)
         {
             if (newLocation == ChassisLocations.None)
@@ -20,9 +20,9 @@ namespace ArmorRepair
             if (mechComponent.Def == null)
                 return;
 
-            if(__result == null)
+            if (__result == null)
                 return;
-            
+
 
             float tpmod = 1;
             float cbmod = 1;

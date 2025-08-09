@@ -2,7 +2,7 @@
 using BattleTech.UI;
 using HarmonyLib;
 
-namespace ArmorRepair
+namespace ArmorRepair.Patches
 {
     [HarmonyPatch(typeof(MechLabPanel), "LoadMech")]
     public static class MechLabPanel_LoadMech
@@ -10,7 +10,7 @@ namespace ArmorRepair
         public static MechDef CurrentMech = null;
 
         [HarmonyPrefix]
-        public static void SetMech(ref bool __runOriginal,MechDef newMechDef)
+        public static void SetMech(ref bool __runOriginal, MechDef newMechDef)
         {
             if (__runOriginal == false) { return; }
             CurrentMech = newMechDef;

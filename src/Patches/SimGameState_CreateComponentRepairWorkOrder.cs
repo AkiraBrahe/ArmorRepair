@@ -2,7 +2,7 @@
 using HarmonyLib;
 using UnityEngine;
 
-namespace ArmorRepair
+namespace ArmorRepair.Patches
 {
     [HarmonyPatch(typeof(SimGameState), "CreateComponentRepairWorkOrder")]
     public static class SimGameState_CreateComponentRepairWorkOrder

@@ -1,12 +1,12 @@
-﻿using System;
-using System.Reflection;
-using HarmonyLib;
+﻿using HarmonyLib;
 using Newtonsoft.Json;
+using System;
+using System.Reflection;
 
 namespace ArmorRepair
 {
-   
-    public class ArmorRepair
+
+    public class Main
     {
         // Mod Settings
         public static Settings ModSettings;
@@ -22,7 +22,7 @@ namespace ArmorRepair
             var harmony = new Harmony("io.github.citizenSnippy.ArmorRepair");
             harmony.PatchAll(Assembly.GetExecutingAssembly());
             CustomComponents.Registry.RegisterSimpleCustomComponents(Assembly.GetExecutingAssembly());
-            
+
             // Serialise settings from mod.json
             ModDirectory = modDirectory;
             try

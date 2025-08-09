@@ -1,10 +1,10 @@
 ﻿using BattleTech;
 using HarmonyLib;
 
-namespace ArmorRepair
+namespace ArmorRepair.Patches
 {
     [HarmonyPatch(typeof(SimGameState), "ShowMechRepairsNeededNotif")]
-    public static class SimGameState_ShowMechRepairsNeededNotif_Patch
+    public static class SimGameState_ShowMechRepairsNeededNotif
     {
         public static void Prefx(ref bool __runOriginal, SimGameState __instance)
         {

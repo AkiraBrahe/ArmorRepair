@@ -1,14 +1,14 @@
-﻿using System;
-using System.Linq;
-using BattleTech;
+﻿using BattleTech;
 using BattleTech.UI;
 using HarmonyLib;
+using System;
+using System.Linq;
 using UnityEngine;
 
-namespace ArmorRepair
+namespace ArmorRepair.Patches
 {
     [HarmonyPatch(typeof(SimGameState), "ResolveCompleteContract")]
-    public static class SimGameState_ResolveCompleteContract_Patch
+    public static class SimGameState_ResolveCompleteContract
     {
 
         // Just for safety, ensure the temp queue in this mod is completely clear before we run any processing

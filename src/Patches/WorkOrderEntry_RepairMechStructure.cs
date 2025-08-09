@@ -1,10 +1,10 @@
-﻿using System;
-using BattleTech;
+﻿using BattleTech;
 using HarmonyLib;
+using System;
 
-namespace ArmorRepair
+namespace ArmorRepair.Patches
 {
-    [HarmonyPatch(typeof(WorkOrderEntry_RepairMechStructure), new Type[]
+    [HarmonyPatch(typeof(BattleTech.WorkOrderEntry_RepairMechStructure), new Type[]
     {
         typeof(string),
         typeof(string),
@@ -16,9 +16,9 @@ namespace ArmorRepair
         typeof(string)
     })]
     [HarmonyPatch(MethodType.Constructor)]
-    public static class WorkOrderEntry_RepairMechStructure_Patch
+    public static class WorkOrderEntry_RepairMechStructure
     {
-        private static void Prefix(ref bool __runOriginal,ref int cbillCost, ref int techCost, int structureAmount)
+        private static void Prefix(ref bool __runOriginal, ref int cbillCost, ref int techCost, int structureAmount)
         {
             try
             {

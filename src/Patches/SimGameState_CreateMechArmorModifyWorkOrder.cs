@@ -1,18 +1,18 @@
-﻿using System;
-using BattleTech;
+﻿using BattleTech;
 using CustomComponents;
 using HarmonyLib;
+using System;
 using UnityEngine;
 
-namespace ArmorRepair
+namespace ArmorRepair.Patches
 {
     [HarmonyPatch(typeof(SimGameState), "CreateMechArmorModifyWorkOrder")]
-    public static class SimGameState_CreateMechArmorModifyWorkOrder_Patch
+    public static class SimGameState_CreateMechArmorModifyWorkOrder
     {
-        private static void Postfix(ref SimGameState __instance, 
+        private static void Postfix(ref SimGameState __instance,
             ref string mechSimGameUID,
             ref ChassisLocations location,
-            ref int armorDiff, ref int frontArmor, ref int rearArmor, ref WorkOrderEntry_ModifyMechArmor __result)
+            ref int armorDiff, ref int frontArmor, ref int rearArmor, ref BattleTech.WorkOrderEntry_ModifyMechArmor __result)
         {
             string id = string.Format("MechLab - ModifyArmor - {0}", __instance.GenerateSimGameUID());
 
@@ -54,7 +54,7 @@ namespace ArmorRepair
                         float acbcost = armor?.ArmorCBCost ?? 1;
 
 
-                        if(ArmorRepair.ModSettings.RepairCostByTag != null && ArmorRepair.ModSettings.RepairCostByTag.Length > 0)
+                        if (ArmorRepair.ModSettings.RepairCostByTag != null && ArmorRepair.ModSettings.RepairCostByTag.Length > 0)
                             foreach (var cost in ArmorRepair.ModSettings.RepairCostByTag)
                             {
                                 if (mechDef.Chassis.ChassisTags.Contains(cost.Tag))
@@ -64,7 +64,7 @@ namespace ArmorRepair
                                     acbcost *= cost.ArmorCBCost;
                                 }
 
-                                if(armoritem != null && armoritem.Def.ComponentTags.Contains(cost.Tag))
+                                if (armoritem != null && armoritem.Def.ComponentTags.Contains(cost.Tag))
                                 {
                                     Logger.LogDebug($" {armoritem.ComponentDefID} {cost.Tag} mods tp:{cost.ArmorTPCost:0.00} cb:{cost.ArmorCBCost:0.00}");
                                     atpcost *= cost.ArmorTPCost;
@@ -94,7 +94,7 @@ namespace ArmorRepair
                     }
                 }
 
-                __result = new WorkOrderEntry_ModifyMechArmor(id, string.Format("Modify Armor - {0}", location.ToString()), mechSimGameUID, techCost, location, frontArmor, rearArmor, cbillCost, string.Empty);
+                __result = new BattleTech.WorkOrderEntry_ModifyMechArmor(id, string.Format("Modify Armor - {0}", location.ToString()), mechSimGameUID, techCost, location, frontArmor, rearArmor, cbillCost, string.Empty);
             }
             catch (Exception ex)
             {

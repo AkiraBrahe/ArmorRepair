@@ -1,10 +1,10 @@
-﻿using System;
+﻿using BattleTech;
 using HarmonyLib;
-using BattleTech;
-using UnityEngine;
+using System;
 using System.Linq;
+using UnityEngine;
 
-namespace ArmorRepair
+namespace ArmorRepair.Patches
 {
 
     // Ensure our temp Mech Lab queue is always cleared before processing another mission/contract completion
@@ -15,7 +15,7 @@ namespace ArmorRepair
      *  If successful we prevent firing the original method as this is required to stop mech armor being blindly reset at the end of a contract.
      */
     [HarmonyPatch(typeof(SimGameState), "RestoreMechPostCombat")]
-    public static class SimGameState_RestoreMechPostCombat_Patch
+    public static class SimGameState_RestoreMechPostCombat
     {
 
         public static void Prefix(ref bool __runOriginal, SimGameState __instance, MechDef mech)
@@ -80,7 +80,7 @@ namespace ArmorRepair
                                     " | structureDifference: " + structureDifference
                                 );
 
-                                WorkOrderEntry_RepairMechStructure newRepairWorkOrder = __instance.CreateMechRepairWorkOrder(
+                                BattleTech.WorkOrderEntry_RepairMechStructure newRepairWorkOrder = __instance.CreateMechRepairWorkOrder(
                                     mech.GUID,
                                     thisLocLoadout.Location,
                                     structureDifference
@@ -189,7 +189,7 @@ namespace ArmorRepair
                                 " | AssignedArmor: " + thisLocLoadout.AssignedArmor +
                                 " | AssignedRearArmor: " + thisLocLoadout.AssignedRearArmor
                             );
-                            WorkOrderEntry_ModifyMechArmor newArmorWorkOrder = __instance.CreateMechArmorModifyWorkOrder(
+                            BattleTech.WorkOrderEntry_ModifyMechArmor newArmorWorkOrder = __instance.CreateMechArmorModifyWorkOrder(
                                 mech.GUID,
                                 thisLocLoadout.Location,
                                 armorDifference,

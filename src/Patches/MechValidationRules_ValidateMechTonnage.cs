@@ -1,13 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using BattleTech;
+﻿using BattleTech;
 using HarmonyLib;
 using Localize;
+using System;
+using System.Collections.Generic;
 
-namespace ArmorRepair
+namespace ArmorRepair.Patches
 {
     [HarmonyPatch(typeof(MechValidationRules), "ValidateMechTonnage")]
-    public static class MechValidationRules_ValidateMechTonnage_Patch
+    public static class MechValidationRules_ValidateMechTonnage
     {
         public static void Postfix(MechDef mechDef, ref Dictionary<MechValidationType, List<Text>> errorMessages)
         {
