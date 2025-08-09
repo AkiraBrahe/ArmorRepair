@@ -1,5 +1,4 @@
 ﻿using BattleTech;
-using HarmonyLib;
 
 namespace ArmorRepair.Patches
 {
@@ -9,9 +8,9 @@ namespace ArmorRepair.Patches
         public static void Prefx(ref bool __runOriginal, SimGameState __instance)
         {
             if (__runOriginal == false) { return; }
-            if (ArmorRepair.ModSettings.enableAutoRepairPrompt)
+            if (Main.Settings.EnableAutoRepairPrompt)
             {
-                __instance.CompanyStats.Set<int>("COMPANY_NotificationViewed_BattleMechRepairsNeeded", __instance.DaysPassed);
+                __instance.CompanyStats.Set("COMPANY_NotificationViewed_BattleMechRepairsNeeded", __instance.DaysPassed);
                 __runOriginal = false; // Suppress original method
             }
             else

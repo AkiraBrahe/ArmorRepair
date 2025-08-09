@@ -1,5 +1,4 @@
 ﻿using BattleTech;
-using HarmonyLib;
 using Localize;
 using System;
 using System.Collections.Generic;
@@ -18,7 +17,6 @@ namespace ArmorRepair.Patches
                     MechComponentRef mechComponentRef = mechDef.Inventory[i];
                     if (mechComponentRef.DamageLevel == ComponentDamageLevel.Destroyed)
                     {
-                        Logger.LogDebug("Flagging destroyed component warning: " + mechDef.Name);
                         errorMessages[MechValidationType.Underweight].Add(new Text("DESTROYED COMPONENT: 'Mech has destroyed components"));
                         break;
                     }
@@ -26,7 +24,7 @@ namespace ArmorRepair.Patches
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex);
+                Main.Log.LogException(ex);
             }
         }
     }

@@ -19,7 +19,7 @@
     "AutoRepairMechsWithDestroyedComponents": true,
 
     "ArmorCategory": "Armor",
-    "StructureCategory": "Sttructure",
+    "StructureCategory": "Structure",
 
     "RepairCostByTag": [
       {
@@ -27,7 +27,11 @@
         "ArmorTPCost": 1,
         "ArmorCBCost": 1,
         "StructureTPCost": 1,
-        "StructureCBCost": 1
+        "StructureCBCost": 1,
+        "InstallTPCost": 1,
+        "InstallCBCost": 1,
+        "RepairTPCost": 1,
+        "RepairCBCost": 1
       }
     ]
   }

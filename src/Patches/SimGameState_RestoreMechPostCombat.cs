@@ -1,5 +1,4 @@
 ﻿using BattleTech;
-using HarmonyLib;
 using System;
 using System.Linq;
 using UnityEngine;
@@ -24,8 +23,6 @@ namespace ArmorRepair.Patches
             {
                 if (__runOriginal == false) { return; }
                 // Start of analysing a mech for armor repair                
-                Logger.LogInfo("Analysing Mech: " + mech.Name);
-                Logger.LogInfo("============================================");
 
                 // Base generic MechLab WO for a mech that requires armor or structure repair - each individual locational subentry WO has to be added to this base WO later
                 WorkOrderEntry_MechLab newMechLabWorkOrder = null;
@@ -35,13 +32,10 @@ namespace ArmorRepair.Patches
                  * Check if the given mech needs any structure repaired and that EnableStructureRepair is true in the mod settings
                  * 
                  */
-                if (ArmorRepair.ModSettings.EnableStructureRepair)
+                if (Main.Settings.EnableStructureRepair)
                 {
                     if (Helpers.CheckStructureDamage(mech))
                     {
-                        Logger.LogDebug("SimGameConstant: StructureRepairTechPoints: " + __instance.Constants.MechLab.StructureRepairTechPoints);
-                        Logger.LogDebug("SimGameConstant: StructureRepairCost: " + __instance.Constants.MechLab.StructureRepairCost);
-
                         // Loop over the ChassisLocations for repair in their highest -> lowest priority order from the dictionary defined in Helpers
                         for (int index = 0; index < Globals.repairPriorities.Count; index++)
                         {
@@ -51,8 +45,6 @@ namespace ArmorRepair.Patches
                             LocationLoadoutDef thisLocLoadout = mech.GetLocationLoadoutDef(thisLoc);
                             // Friendly name for this location
                             string thisLocName = thisLoc.ToString();
-
-                            Logger.LogDebug("Analysing location: " + thisLocName);
 
                             // Check if a new base MechLab order needs to be created or not
                             if (newMechLabWorkOrder == null)
@@ -71,28 +63,13 @@ namespace ArmorRepair.Patches
                                 int structureDifference = 0;
                                 structureDifference = (int)Mathf.Abs(currentStructure - definedStructure);
 
-                                Logger.LogInfo("Total structure difference for " + thisLocName + " is " + structureDifference);
-
-                                Logger.LogInfo("Creating MechRepair work order entry for " + thisLocName);
-                                Logger.LogDebug("Calling CreateMechRepairWorkOrder with params - GUID: " +
-                                    mech.GUID.ToString() +
-                                    " | Location: " + thisLocName +
-                                    " | structureDifference: " + structureDifference
-                                );
-
                                 BattleTech.WorkOrderEntry_RepairMechStructure newRepairWorkOrder = __instance.CreateMechRepairWorkOrder(
                                     mech.GUID,
                                     thisLocLoadout.Location,
                                     structureDifference
                                 );
 
-                                Logger.LogDebug("Adding WO subentry to repair missing " + thisLocName + " structure.");
                                 newMechLabWorkOrder.AddSubEntry(newRepairWorkOrder);
-
-                            }
-                            else
-                            {
-                                Logger.LogDebug("Structure repair not required for: " + thisLocName);
                             }
                         }
                     }
@@ -123,11 +100,9 @@ namespace ArmorRepair.Patches
                             }
 
                             // Create a new component repair work order for this component
-                            Logger.LogInfo("Creating Component Repair work order entry for " + mechComponentRef.ComponentDefID);
                             WorkOrderEntry_RepairComponent newComponentRepairOrder = __instance.CreateComponentRepairWorkOrder(mechComponentRef, true);
 
                             // Attach as a child to the base Mech Lab order.
-                            Logger.LogDebug("Adding WO subentry to repair component " + mechComponentRef.ComponentDefID);
                             newMechLabWorkOrder.AddSubEntry(newComponentRepairOrder);
                         }
                     }
@@ -141,10 +116,6 @@ namespace ArmorRepair.Patches
                  */
                 if (Helpers.CheckArmorDamage(mech))
                 {
-
-                    Logger.LogDebug("SimGameConstant: ArmorInstallTechPoints: " + __instance.Constants.MechLab.ArmorInstallTechPoints);
-                    Logger.LogDebug("SimGameConstant: ArmorInstallCost: " + __instance.Constants.MechLab.ArmorInstallCost);
-
                     // Loop over the ChassisLocations for repair in their highest -> lowest priority order from the dictionary defined in Helpers
                     for (int index = 0; index < Globals.repairPriorities.Count; index++)
                     {
@@ -155,7 +126,6 @@ namespace ArmorRepair.Patches
                         // Friendly name for this location
                         string thisLocName = thisLoc.ToString();
 
-                        Logger.LogDebug("Analysing location: " + thisLocName);
 
                         // Check if a new base MechLab order needs to be created
                         if (newMechLabWorkOrder == null)
@@ -165,36 +135,20 @@ namespace ArmorRepair.Patches
                         }
 
                         // Work out difference of armor lost for each location - default to 0
-                        int armorDifference = 0;
+                        int armorDifference = thisLocLoadout == mech.CenterTorso || thisLocLoadout == mech.RightTorso || thisLocLoadout == mech.LeftTorso
+                            ? (int)Mathf.Abs(thisLocLoadout.CurrentArmor - thisLocLoadout.AssignedArmor) + (int)Mathf.Abs(thisLocLoadout.CurrentRearArmor - thisLocLoadout.AssignedRearArmor)
+                            : (int)Mathf.Abs(thisLocLoadout.CurrentArmor - thisLocLoadout.AssignedArmor);
 
                         // Consider rear armour in difference calculation if this is a RT, CT or LT
-                        if (thisLocLoadout == mech.CenterTorso || thisLocLoadout == mech.RightTorso || thisLocLoadout == mech.LeftTorso)
-                        {
-                            Logger.LogDebug("Location also has rear armor.");
-                            armorDifference = (int)Mathf.Abs(thisLocLoadout.CurrentArmor - thisLocLoadout.AssignedArmor) + (int)Mathf.Abs(thisLocLoadout.CurrentRearArmor - thisLocLoadout.AssignedRearArmor);
-                        }
-                        else
-                        {
-                            armorDifference = (int)Mathf.Abs(thisLocLoadout.CurrentArmor - thisLocLoadout.AssignedArmor);
-                        }
                         // Only create work orders for repairing armor if this location has taken armor damage in combat
                         if (armorDifference != 0)
                         {
-                            Logger.LogInfo("Total armor difference for " + thisLocName + " is " + armorDifference);
-                            Logger.LogInfo("Creating ModifyMechArmor work order entry for " + thisLocName);
-                            Logger.LogDebug("Calling ModifyMechArmor WO with params - GUID: " +
-                                mech.GUID.ToString() +
-                                " | Location: " + thisLocName +
-                                " | armorDifference: " + armorDifference +
-                                " | AssignedArmor: " + thisLocLoadout.AssignedArmor +
-                                " | AssignedRearArmor: " + thisLocLoadout.AssignedRearArmor
-                            );
                             BattleTech.WorkOrderEntry_ModifyMechArmor newArmorWorkOrder = __instance.CreateMechArmorModifyWorkOrder(
                                 mech.GUID,
                                 thisLocLoadout.Location,
                                 armorDifference,
-                                (int)(thisLocLoadout.AssignedArmor),
-                                (int)(thisLocLoadout.AssignedRearArmor)
+                                (int)thisLocLoadout.AssignedArmor,
+                                (int)thisLocLoadout.AssignedRearArmor
                             );
 
                             /* IMPORTANT!
@@ -203,19 +157,12 @@ namespace ArmorRepair.Patches
                                 * 
                                 * NOTE: CeilToInt (or similar rounding) is vital to prevent fractions of armor from causing Mech tonnage / validation issues for the player
                                 */
-                            Logger.LogDebug("Forcing assignment of Assigned Armor: " + thisLocLoadout.AssignedArmor + " To Current Armor (CeilToInt): " + Mathf.CeilToInt(thisLocLoadout.CurrentArmor));
                             thisLocLoadout.AssignedArmor = Mathf.CeilToInt(thisLocLoadout.CurrentArmor);
                             thisLocLoadout.AssignedRearArmor = Mathf.CeilToInt(thisLocLoadout.CurrentRearArmor);
 
-                            Logger.LogInfo("Adding WO subentry to install missing " + thisLocName + " armor.");
                             newMechLabWorkOrder.AddSubEntry(newArmorWorkOrder);
 
                         }
-                        else
-                        {
-                            Logger.LogDebug("Armor repair not required for: " + thisLocName);
-                        }
-
                     }
                 }
 
@@ -231,14 +178,8 @@ namespace ArmorRepair.Patches
                     {
                         // Submit work order to our temporary queue for internal processing
                         Helpers.SubmitTempWorkOrder(
-                            __instance,
-                            newMechLabWorkOrder,
-                            mech
+                            newMechLabWorkOrder
                         );
-                    }
-                    else
-                    {
-                        Logger.LogInfo(mech.Name + " did not require repairs.");
                     }
                 }
 
@@ -247,7 +188,6 @@ namespace ArmorRepair.Patches
                 {
                     if (mechComponentRef.DamageLevel == ComponentDamageLevel.NonFunctional)
                     {
-                        Logger.LogDebug("Resetting non-functional mech component: " + mechComponentRef.ToString());
                         mechComponentRef.DamageLevel = ComponentDamageLevel.Functional;
                     }
                 }
@@ -257,7 +197,6 @@ namespace ArmorRepair.Patches
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex);
                 SimGameState.logger.LogException(ex);
                 __runOriginal = true; // Allow original method to fire if there is an exception
             }

@@ -1,5 +1,4 @@
 ﻿using BattleTech;
-using HarmonyLib;
 using UnityEngine;
 
 namespace ArmorRepair.Patches
@@ -9,9 +8,7 @@ namespace ArmorRepair.Patches
     {
         [HarmonyPostfix]
         [HarmonyPriority(Priority.Low)]
-        public static void ChangeCost(string mechSimGameUID,
-            MechComponentRef mechComponent, ChassisLocations newLocation,
-            ChassisLocations previousLocation, ref WorkOrderEntry_InstallComponent __result)
+        public static void ChangeCost(MechComponentRef mechComponent, ChassisLocations newLocation, ref WorkOrderEntry_InstallComponent __result)
         {
             if (newLocation == ChassisLocations.None)
                 return;
@@ -27,23 +24,16 @@ namespace ArmorRepair.Patches
             float tpmod = 1;
             float cbmod = 1;
 
-            Logger.LogDebug($"Module Install Cost for {mechComponent.ComponentDefID}: ");
-            Logger.LogDebug("***************************************");
-
-
-            foreach (var tag in ArmorRepair.ModSettings.RepairCostByTag)
+            foreach (var tag in Main.Settings.RepairCostByTag)
             {
                 if (MechLabPanel_LoadMech.CurrentMech.Chassis.ChassisTags.Contains(tag.Tag))
                 {
-                    Logger.LogDebug($" Chassis {tag.Tag} mods tp:{tag.InstallTPCost:0.00} cb:{tag.InstallCBCost:0.00}");
-
                     tpmod *= tag.InstallTPCost;
                     cbmod *= tag.InstallCBCost;
                 }
 
                 if (mechComponent.Def.ComponentTags.Contains(tag.Tag))
                 {
-                    Logger.LogDebug($" {mechComponent.ComponentDefID} {tag.Tag} mods tp:{tag.InstallTPCost:0.00} cb:{tag.InstallCBCost:0.00}");
                     tpmod *= tag.InstallTPCost;
                     cbmod *= tag.InstallCBCost;
                 }
@@ -57,7 +47,6 @@ namespace ArmorRepair.Patches
                 {
                     var cost = trav.Field<int>("Cost");
                     int new_cost = Mathf.CeilToInt(cost.Value * tpmod);
-                    Logger.LogDebug($" TP cost: {cost.Value} * {tpmod:0.000} = {new_cost}");
                     cost.Value = new_cost;
                 }
 
@@ -65,15 +54,10 @@ namespace ArmorRepair.Patches
                 {
                     var cost = trav.Field<int>("CBillCost");
                     int new_cost = Mathf.CeilToInt(cost.Value * cbmod);
-                    Logger.LogDebug($" CBIll cost: {cost.Value} * {cbmod:0.000} = {new_cost}");
                     cost.Value = new_cost;
                 }
 
             }
-            else
-                Logger.LogDebug(" no need to adjust, return");
-
-            Logger.LogDebug("***************************************");
         }
     }
 }

@@ -9,53 +9,81 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>ArmorRepair</RootNamespace>
     <AssemblyName>ArmorRepair</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8.1</TargetFrameworkVersion>
+    <LangVersion>latest</LangVersion>
     <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>..\..\..\..\..\..\Program Files %28x86%29\Steam\Steamapps\common\BattleTech\Mods\ArmorRepair\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
+    <DebugType>none</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
+    <OutputPath>..\..\..\..\..\..\Program Files %28x86%29\Steam\Steamapps\common\BattleTech\Mods\ArmorRepair\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="HarmonyX">
-      <Version>2.10.1</Version>
+    <PackageReference Include="HarmonyX" Version="2.10.1">
+      <IncludeAssets>compile</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Krafs.Publicizer" Version="2.2.1" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Core\ArmorRepairFactor.cs" />
+    <Compile Include="Core\Globals.cs" />
+    <Compile Include="Core\Helpers.cs" />
+    <Compile Include="Patches\MechLabPanel_LoadMech.cs" />
+    <Compile Include="Patches\MechValidationRules_ValidateMechTonnage.cs" />
+    <Compile Include="Patches\SimGameState_CreateComponentInstallWorkOrder.cs" />
+    <Compile Include="Patches\SimGameState_CreateComponentRepairWorkOrder.cs" />
+    <Compile Include="Patches\SimGameState_CreateMechArmorModifyWorkOrder.cs" />
+    <Compile Include="Patches\SimGameState_CreateMechRepairWorkOrder.cs" />
+    <Compile Include="Patches\SimGameState_ML_RepairMech.cs" />
+    <Compile Include="Patches\SimGameState_ResolveCompleteContract.cs" />
+    <Compile Include="Patches\SimGameState_RestoreMechPostCombat.cs" />
+    <Compile Include="Patches\SimGameState_ShowMechRepairsNeededNotif.cs" />
+    <Compile Include="Patches\WorkOrderEntry_ModifyMechArmor.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="GlobalUsings.cs" />
+    <Compile Include="Main.cs" />
+    <Compile Include="ModSettings.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <Reference Include="Assembly-CSharp">
-      <HintPath>$(BattleTechGameDir)\Mods\.modtek\AssembliesInjected\Assembly-CSharp.dll</HintPath>
+      <HintPath>$(BattleTechGameDir)\BattleTech_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="BattleTech.Common">
       <HintPath>$(BattleTechGameDir)\BattleTech_Data\Managed\BattleTech.Common.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="CustomComponents">
-      <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\Steamapps\common\BattleTech\Mods\CustomComponents\CustomComponents.dll</HintPath>
+      <HintPath>$(BattleTechGameDir)\Mods\CustomComponents\CustomComponents.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>$(BattleTechGameDir)\BattleTech_Data\Managed\Newtonsoft.Json.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="UnityEngine">
       <HintPath>$(BattleTechGameDir)\BattleTech_Data\Managed\UnityEngine.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.BaselibModule">
       <HintPath>$(BattleTechGameDir)\BattleTech_Data\Managed\UnityEngine.BaselibModule.dll</HintPath>
@@ -67,33 +95,9 @@
     </Reference>
     <Reference Include="UnityEngine.UI">
       <HintPath>$(BattleTechGameDir)\BattleTech_Data\Managed\UnityEngine.UI.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Main.cs" />
-    <Compile Include="ArmorRepairFactor.cs" />
-    <Compile Include="Helpers.cs" />
-    <Compile Include="Logger.cs" />
-    <Compile Include="Patches\MechLabPanel_LoadMech.cs" />
-    <Compile Include="Patches\MechValidationRules_ValidateMechTonnage.cs" />
-    <Compile Include="Patches\SimGameState_CreateComponentRepairWorkOrder.cs" />
-    <Compile Include="Patches\SimGameState_RestoreMechPostCombat.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Settings.cs" />
-    <Compile Include="Globals.cs" />
-    <Compile Include="Patches\SimGameState_ResolveCompleteContract.cs" />
-    <Compile Include="Patches\SimGameState_CreateComponentInstallWorkOrder.cs" />
-    <Compile Include="Patches\SimGameState_CreateMechArmorModifyWorkOrder.cs" />
-    <Compile Include="Patches\SimGameState_CreateMechRepairWorkOrder.cs" />
-    <Compile Include="Patches\SimGameState_ML_RepairMech.cs" />
-    <Compile Include="Patches\SimGameState_ShowMechRepairsNeededNotif.cs" />
-    <Compile Include="Patches\WorkOrderEntry_ModifyMechArmor.cs" />
-    <Compile Include="Patches\WorkOrderEntry_RepairMechStructure.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Target Name="AfterBuild">
-    <Copy SourceFiles="$(TargetPath);" DestinationFolder="$(BattleTechGameDir)\Mods\Options\ArmorRepair" Condition="'$(BattleTechGameDir)' != '' And Exists('$(BattleTechGameDir)\Mods\Options\ArmorRepair')" />
-    <Copy SourceFiles="$(TargetPath);" DestinationFolder="$(RogueTechRepo)\InstallOptions\ArmorRepair\ArmorRepair" Condition="'$(RogueTechRepo)' != '' And Exists('$(RogueTechRepo)\InstallOptions\ArmorRepair\ArmorRepair')" />
-  </Target>
 </Project>

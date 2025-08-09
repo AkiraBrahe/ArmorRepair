@@ -1,13 +1,12 @@
 ﻿using BattleTech;
-using HarmonyLib;
 using System;
 using UnityEngine;
 
 namespace ArmorRepair.Patches
 {
     [HarmonyPatch(typeof(BattleTech.WorkOrderEntry_ModifyMechArmor))]
-    [HarmonyPatch(new Type[]
-    {
+    [HarmonyPatch(
+    [
         typeof(string),
         typeof(string),
         typeof(string),
@@ -17,11 +16,11 @@ namespace ArmorRepair.Patches
         typeof(int),
         typeof(int),
         typeof(string)
-    })]
+    ])]
     [HarmonyPatch(MethodType.Constructor)]
     public static class WorkOrderEntry_ModifyMechArmor
     {
-        private static void Prefix(ref bool __runOriginal, ref int cbillCost, ref int techCost, int desiredFrontArmor, int desiredRearArmor)
+        public static void Prefix(ref bool __runOriginal, ref int cbillCost, ref int techCost, int desiredFrontArmor, int desiredRearArmor)
         {
             try
             {
@@ -31,16 +30,10 @@ namespace ArmorRepair.Patches
                 techCost = Mathf.CeilToInt(num);
                 cbillCost = Mathf.CeilToInt(cbillCost);
 
-                Logger.LogDebug("Armor WO Costing: ");
-                Logger.LogDebug("*********************");
-                Logger.LogDebug("techCost: " + techCost);
-                Logger.LogDebug("cBillCost: " + cbillCost);
-                Logger.LogDebug("*********************");
-
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex);
+                Main.Log.LogException(ex);
             }
         }
     }

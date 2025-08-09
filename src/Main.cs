@@ -1,52 +1,37 @@
-﻿using HarmonyLib;
+﻿using HBS.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Reflection;
 
 namespace ArmorRepair
 {
-
     public class Main
     {
-        // Mod Settings
-        public static Settings ModSettings;
-        public static string ModDirectory;
+        internal static Harmony harmony;
+        internal static string modDir;
+        internal static ILog Log { get; private set; }
+        internal static ModSettings Settings { get; private set; }
 
-        public static void Init(string modDirectory, string settingsJSON)
+        public static void Init(string directory, string settingsJSON)
         {
+            modDir = directory;
+            Log = Logger.GetLogger("ArmorRepair");
+            Logger.SetLoggerLevel("ArmorRepair", LogLevel.Debug);
 
-            new Logger();
-
-            Logger.LogInfo("Mod Initialising...");
-
-            var harmony = new Harmony("io.github.citizenSnippy.ArmorRepair");
-            harmony.PatchAll(Assembly.GetExecutingAssembly());
-            CustomComponents.Registry.RegisterSimpleCustomComponents(Assembly.GetExecutingAssembly());
-
-            // Serialise settings from mod.json
-            ModDirectory = modDirectory;
             try
             {
-                ModSettings = JsonConvert.DeserializeObject<Settings>(settingsJSON);
+                CustomComponents.Registry.RegisterSimpleCustomComponents(Assembly.GetExecutingAssembly());
+                Settings = JsonConvert.DeserializeObject<ModSettings>(settingsJSON) ?? new ModSettings();
+                harmony = new Harmony("io.github.citizenSnippy.ArmorRepair");
+                harmony.PatchAll(Assembly.GetExecutingAssembly());
+                Log.LogDebug("Mod Initialized!");
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex);
-                ModSettings = new Settings();
+                Log.LogException(ex);
             }
-            ModSettings.Complete();
 
-            Logger.LogDebug("Mod Directory: " + ModDirectory);
-            Logger.LogDebug("Mod Settings Debug: " + ModSettings.Debug);
-            Logger.LogDebug("Mod Settings StructureRepair: " + ModSettings.EnableStructureRepair);
-            Logger.LogDebug("Mod Settings StructureScaling: " + ModSettings.ScaleStructureCostByTonnage);
-            Logger.LogDebug("Mod Settings ArmorScaling: " + ModSettings.ScaleArmorCostByTonnage);
-            Logger.LogDebug("Mod Settings EnableAutoRepairPrompt: " + ModSettings.EnableAutoRepairPrompt);
-            Logger.LogDebug("Mod Settings AutoRepairMechsWithDestroyedComponents: " + ModSettings.AutoRepairMechsWithDestroyedComponents);
-            Logger.LogInfo("Mod Initialised.");
-
+            Settings.Complete();
         }
-
     }
-
 }

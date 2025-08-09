@@ -1,6 +1,5 @@
 ﻿using BattleTech;
 using CustomComponents;
-using HarmonyLib;
 using System;
 using UnityEngine;
 
@@ -9,8 +8,7 @@ namespace ArmorRepair.Patches
     [HarmonyPatch(typeof(SimGameState), "CreateMechRepairWorkOrder")]
     public static class SimGameState_CreateMechRepairWorkOrder
     {
-
-        private static void Postfix(ref SimGameState __instance, ref string mechSimGameUID, ref ChassisLocations location, ref int structureCount, ref BattleTech.WorkOrderEntry_RepairMechStructure __result)
+        public static void Postfix(ref SimGameState __instance, ref string mechSimGameUID, ref ChassisLocations location, ref int structureCount, ref BattleTech.WorkOrderEntry_RepairMechStructure __result)
         {
             try
             {
@@ -31,14 +29,9 @@ namespace ArmorRepair.Patches
                             is_repaired = true;
                             break;
                         }
-                        Logger.LogDebug("Structure WO Subentry Costing:");
-                        Logger.LogDebug("***************************************");
-                        Logger.LogDebug(" location: " + location.ToString());
-                        Logger.LogDebug(" structureCount: " + structureCount);
-                        Logger.LogDebug(" mechTonnageModifier: " + mechTonnageModifier);
 
                         // If ScaleStructureCostByTonnage is enabled, make the mech tonnage work as a percentage tech cost reduction (95 tons = 0.95 or "95%" of the cost, 50 tons = 0.05 or "50%" of the cost etc)
-                        if (ArmorRepair.ModSettings.ScaleStructureCostByTonnage)
+                        if (Main.Settings.ScaleStructureCostByTonnage)
                         {
                             mechTonnageModifier = mechDef.Chassis.Tonnage * 0.01f;
                         }
@@ -47,7 +40,7 @@ namespace ArmorRepair.Patches
                         MechComponentRef structitem = null;
                         foreach (var item in mechDef.Inventory)
                         {
-                            if (item.IsCategory(ArmorRepair.ModSettings.StructureCategory))
+                            if (item.IsCategory(Main.Settings.StructureCategory))
                             {
                                 str = item.GetComponent<StructureRepairFactor>();
                                 structitem = item;
@@ -55,29 +48,21 @@ namespace ArmorRepair.Patches
                             }
                         }
 
-                        if (str != null)
-                        {
-                            Logger.LogDebug($" StructRepair mods tp:{str.StructureTPCost:0.00} cb:{str.StructureCBCost:0.00}");
-                        }
-
                         tpmod *= str?.StructureTPCost ?? 1;
                         cbmod *= str?.StructureCBCost ?? 1;
 
 
-                        if (ArmorRepair.ModSettings.RepairCostByTag != null && ArmorRepair.ModSettings.RepairCostByTag.Length > 0)
-                            foreach (var cost in ArmorRepair.ModSettings.RepairCostByTag)
+                        if (Main.Settings.RepairCostByTag != null && Main.Settings.RepairCostByTag.Length > 0)
+                            foreach (var cost in Main.Settings.RepairCostByTag)
                             {
                                 if (mechDef.Chassis.ChassisTags.Contains(cost.Tag))
                                 {
-                                    Logger.LogDebug($" Chassis {cost.Tag} mods tp:{cost.StructureTPCost:0.00} cb:{cost.StructureCBCost:0.00}");
                                     tpmod *= cost.StructureTPCost;
                                     cbmod *= cost.StructureCBCost;
                                 }
 
                                 if (structitem != null && structitem.Def.ComponentTags.Contains(cost.Tag))
                                 {
-                                    Logger.LogDebug($" {structitem.ComponentDefID} {cost.Tag} mods tp:{cost.StructureTPCost:0.00} cb:{cost.StructureCBCost:0.00}");
-
                                     tpmod *= cost.StructureTPCost;
                                     cbmod *= cost.StructureCBCost;
                                 }
@@ -94,21 +79,15 @@ namespace ArmorRepair.Patches
 
 
 
-                int techCost = Mathf.CeilToInt((__instance.Constants.MechLab.StructureRepairTechPoints * (float)structureCount * tpmod) * mechTonnageModifier);
-                int cbillCost = Mathf.CeilToInt((float)((__instance.Constants.MechLab.StructureRepairCost * structureCount) * cbmod) * mechTonnageModifier);
-
-                Logger.LogDebug($" tpmod: {tpmod:0.000}");
-                Logger.LogDebug($" cbmod: {cbmod:0.000}");
-                Logger.LogDebug(" techCost: " + techCost);
-                Logger.LogDebug(" cBill cost: " + cbillCost);
-                Logger.LogDebug("***************************************");
+                int techCost = Mathf.CeilToInt(__instance.Constants.MechLab.StructureRepairTechPoints * structureCount * tpmod * mechTonnageModifier);
+                int cbillCost = Mathf.CeilToInt(__instance.Constants.MechLab.StructureRepairCost * structureCount * cbmod * mechTonnageModifier);
 
                 __result = new BattleTech.WorkOrderEntry_RepairMechStructure(id, string.Format("Repair 'Mech - {0}", location.ToString()), mechSimGameUID, techCost, location, structureCount, cbillCost, string.Empty);
 
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex);
+                Main.Log.LogException(ex);
             }
         }
     }
