@@ -5,14 +5,14 @@ namespace ArmorRepair
 {
     class Globals
     {
-        /* TEMPMECHLABQUEUE
-         * Temporary queue to hold post-battle work orders until player confirms they want them processed
+        /* TEMP MECHLAB QUEUE
+         * Temporary queue to hold post-battle work orders until player confirms they want them processed.
          * 
          */
         public static List<WorkOrderEntry_MechLab> tempMechLabQueue = [];
 
         /* REPAIR PRIORITIES
-         * Set priority order of chassis locations for repairs (key 0 = highest priority)
+         * Set priority order of chassis locations for repairs (key 0 = highest priority).
          * 
          * These are ordered so that repair work orders target the most important locations for the player first.
          * This lets them cancel a work order before it completes but still have key locations like the Head and Center Torso repaired.

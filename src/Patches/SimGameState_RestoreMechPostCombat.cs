@@ -1,286 +1,126 @@
 ﻿using BattleTech;
-using System;
-using System.Linq;
 using UnityEngine;
 
 namespace ArmorRepair.Patches
 {
-
-    // Ensure our temp Mech Lab queue is always cleared before processing another mission/contract completion
-
-
-    /* Prefix on RestoreMechPostCombat to create a new modify armor work order from the armor loss difference of each mech at the end of combat
-     * 
-     *  If successful we prevent firing the original method as this is required to stop mech armor being blindly reset at the end of a contract.
-     */
+    /// <summary>
+    /// Creates repair work orders for structure, components, and armor for each mech at the end of combat.
+    /// </summary>
     [HarmonyPatch(typeof(SimGameState), "RestoreMechPostCombat")]
     public static class SimGameState_RestoreMechPostCombat
     {
-
+        [HarmonyPrefix]
+        [HarmonyWrapSafe]
         public static void Prefix(ref bool __runOriginal, SimGameState __instance, MechDef mech)
         {
+            if (!__runOriginal) return;
+
+            WorkOrderEntry_MechLab newWorkOrder = null;
+            ProcessStructureRepairs(__instance, mech, ref newWorkOrder);
+            ProcessComponentRepairs(__instance, mech, ref newWorkOrder);
+            ProcessArmorRepairs(__instance, mech, ref newWorkOrder);
+
+            // If any repair sub-orders were created, submit the main work order.
+            if (newWorkOrder?.SubEntryCount > 0)
+            {
+                Helpers.SubmitTempWorkOrder(newWorkOrder);
+            }
+
+            // This logic is from the original method; it resets destroyed components to a functional state.
+            foreach (MechComponentRef component in mech.Inventory)
+            {
+                if (component.DamageLevel == ComponentDamageLevel.NonFunctional)
+                {
+                    component.DamageLevel = ComponentDamageLevel.Functional;
+                }
+            }
+
+            __runOriginal = false;
+        }
+
+        private static void ProcessStructureRepairs(SimGameState sim, MechDef mech, ref WorkOrderEntry_MechLab workOrder)
+        {
+            if (!Main.Settings.EnableStructureRepair || !mech.NeedsStructureRepair())
+                return;
+
+            foreach (var location in Globals.repairPriorities.Values)
+            {
+                var locationLoadout = mech.GetLocationLoadoutDef(location);
+                float currentStructure = locationLoadout.CurrentInternalStructure;
+                float definedStructure = mech.GetChassisLocationDef(location).InternalStructure;
+
+                if (currentStructure < definedStructure)
+                {
+                    workOrder ??= Helpers.CreateBaseMechLabOrder(sim, mech);
+
+                    int structureDifference = (int)Mathf.Abs(currentStructure - definedStructure);
+                    var repairWorkOrder = sim.CreateMechRepairWorkOrder(mech.GUID, location, structureDifference);
+                    workOrder.AddSubEntry(repairWorkOrder);
+                }
+            }
+        }
+
+        private static void ProcessComponentRepairs(SimGameState sim, MechDef mech, ref WorkOrderEntry_MechLab workOrder)
+        {
+            if (!mech.HasDamagedComponents())
+                return;
+
+            MechLabPanel_LoadMech.CurrentMech = mech;
             try
             {
-                if (__runOriginal == false) { return; }
-                // Start of analysing a mech for armor repair                
-
-                // Base generic MechLab WO for a mech that requires armor or structure repair - each individual locational subentry WO has to be added to this base WO later
-                WorkOrderEntry_MechLab newMechLabWorkOrder = null;
-
-                /* STRUCTURE DAMAGE CHECKS
-                 * ------------------------
-                 * Check if the given mech needs any structure repaired and that EnableStructureRepair is true in the mod settings
-                 * 
-                 */
-                if (Main.Settings.EnableStructureRepair)
+                foreach (var component in mech.Inventory)
                 {
-                    if (Helpers.CheckStructureDamage(mech))
+                    if (component.DamageLevel == ComponentDamageLevel.Penalized)
                     {
-                        // Loop over the ChassisLocations for repair in their highest -> lowest priority order from the dictionary defined in Helpers
-                        for (int index = 0; index < Globals.repairPriorities.Count; index++)
-                        {
-                            // Set current looped ChassisLocation
-                            ChassisLocations thisLoc = Globals.repairPriorities.ElementAt(index).Value;
-                            // Get current mech's loadout definition from the looped chassis location
-                            LocationLoadoutDef thisLocLoadout = mech.GetLocationLoadoutDef(thisLoc);
-                            // Friendly name for this location
-                            string thisLocName = thisLoc.ToString();
+                        workOrder ??= Helpers.CreateBaseMechLabOrder(sim, mech);
 
-                            // Check if a new base MechLab order needs to be created or not
-                            if (newMechLabWorkOrder == null)
-                            {
-                                // Create new base work order of the generic MechLab type if it doesn't already exist
-                                newMechLabWorkOrder = Helpers.CreateBaseMechLabOrder(__instance, mech);
-                            }
-
-                            float currentStructure = thisLocLoadout.CurrentInternalStructure;
-                            float definedStructure = mech.GetChassisLocationDef(thisLoc).InternalStructure;
-
-                            // Only create work orders for repairing structure if this location has taken damage in combat
-                            if (currentStructure != definedStructure)
-                            {
-                                // Work out difference of structure lost for each location - default to 0
-                                int structureDifference = 0;
-                                structureDifference = (int)Mathf.Abs(currentStructure - definedStructure);
-
-                                BattleTech.WorkOrderEntry_RepairMechStructure newRepairWorkOrder = __instance.CreateMechRepairWorkOrder(
-                                    mech.GUID,
-                                    thisLocLoadout.Location,
-                                    structureDifference
-                                );
-
-                                newMechLabWorkOrder.AddSubEntry(newRepairWorkOrder);
-                            }
-                        }
+                        var repairWorkOrder = sim.CreateComponentRepairWorkOrder(component, true);
+                        workOrder.AddSubEntry(repairWorkOrder);
                     }
                 }
-
-                /* COMPONENT DAMAGE CHECKS
-                 * -----------------------
-                 * Check if the given mech needs any critted components repaired
-                 * 
-                 */
-                if (Helpers.CheckDamagedComponents(mech))
-                {
-                    // Cache mech for tag lookup in CreateComponentRepairWorkOrder as if we were in lab
-                    MechLabPanel_LoadMech.CurrentMech = mech;
-
-                    for (int index = 0; index < mech.Inventory.Length; index++)
-                    {
-                        MechComponentRef mechComponentRef = mech.Inventory[index];
-
-                        // Penalized = Critted Component
-                        if (mechComponentRef.DamageLevel == ComponentDamageLevel.Penalized)
-                        {
-                            // Check if a new base MechLab order needs to be created or not
-                            if (newMechLabWorkOrder == null)
-                            {
-                                // Create new base work order of the generic MechLab type if it doesn't already exist
-                                newMechLabWorkOrder = Helpers.CreateBaseMechLabOrder(__instance, mech);
-                            }
-
-                            // Create a new component repair work order for this component
-                            WorkOrderEntry_RepairComponent newComponentRepairOrder = __instance.CreateComponentRepairWorkOrder(mechComponentRef, true);
-
-                            // Attach as a child to the base Mech Lab order.
-                            newMechLabWorkOrder.AddSubEntry(newComponentRepairOrder);
-                        }
-                    }
-                }
-
-
-                /* ARMOR DAMAGE CHECKS
-                 * -------------------
-                 * Check if the given mech needs any structure repaired
-                 * 
-                 */
-                if (Helpers.CheckArmorDamage(mech))
-                {
-                    // Loop over the ChassisLocations for repair in their highest -> lowest priority order from the dictionary defined in Helpers
-                    for (int index = 0; index < Globals.repairPriorities.Count; index++)
-                    {
-                        // Set current ChassisLocation
-                        ChassisLocations thisLoc = Globals.repairPriorities.ElementAt(index).Value;
-                        // Get current mech's loadout from the looped chassis location
-                        LocationLoadoutDef thisLocLoadout = mech.GetLocationLoadoutDef(thisLoc);
-                        // Friendly name for this location
-                        string thisLocName = thisLoc.ToString();
-
-
-                        // Check if a new base MechLab order needs to be created
-                        if (newMechLabWorkOrder == null)
-                        {
-                            // Create new base work order of the generic MechLab type if it doesn't already exist
-                            newMechLabWorkOrder = Helpers.CreateBaseMechLabOrder(__instance, mech);
-                        }
-
-                        // Work out difference of armor lost for each location - default to 0
-                        int armorDifference = thisLocLoadout == mech.CenterTorso || thisLocLoadout == mech.RightTorso || thisLocLoadout == mech.LeftTorso
-                            ? (int)Mathf.Abs(thisLocLoadout.CurrentArmor - thisLocLoadout.AssignedArmor) + (int)Mathf.Abs(thisLocLoadout.CurrentRearArmor - thisLocLoadout.AssignedRearArmor)
-                            : (int)Mathf.Abs(thisLocLoadout.CurrentArmor - thisLocLoadout.AssignedArmor);
-
-                        // Consider rear armour in difference calculation if this is a RT, CT or LT
-                        // Only create work orders for repairing armor if this location has taken armor damage in combat
-                        if (armorDifference != 0)
-                        {
-                            BattleTech.WorkOrderEntry_ModifyMechArmor newArmorWorkOrder = __instance.CreateMechArmorModifyWorkOrder(
-                                mech.GUID,
-                                thisLocLoadout.Location,
-                                armorDifference,
-                                (int)thisLocLoadout.AssignedArmor,
-                                (int)thisLocLoadout.AssignedRearArmor
-                            );
-
-                            /* IMPORTANT!
-                                * This has turned out to be required as CurrentArmor appears to be reset to AssignedArmor from somewhere unknown in the game after battle
-                                * So if we don't reset AssignedArmor now, player can cancel the work order to get a free armor reset anyway!
-                                * 
-                                * NOTE: CeilToInt (or similar rounding) is vital to prevent fractions of armor from causing Mech tonnage / validation issues for the player
-                                */
-                            thisLocLoadout.AssignedArmor = Mathf.CeilToInt(thisLocLoadout.CurrentArmor);
-                            thisLocLoadout.AssignedRearArmor = Mathf.CeilToInt(thisLocLoadout.CurrentRearArmor);
-
-                            newMechLabWorkOrder.AddSubEntry(newArmorWorkOrder);
-
-                        }
-                    }
-                }
-
-
-                /* WORK ORDER SUBMISSION
-                 * ---------------------
-                 * Submit the complete work order for the mech, which will include any repair armor / structure subentries for each location
-                 * 
-                 */
-                if (newMechLabWorkOrder != null)
-                {
-                    if (newMechLabWorkOrder.SubEntryCount > 0)
-                    {
-                        // Submit work order to our temporary queue for internal processing
-                        Helpers.SubmitTempWorkOrder(
-                            newMechLabWorkOrder
-                        );
-                    }
-                }
-
-                // Lifted from original RestoreMechPostCombat method - resets any non-functional mech components back to functional
-                foreach (MechComponentRef mechComponentRef in mech.Inventory)
-                {
-                    if (mechComponentRef.DamageLevel == ComponentDamageLevel.NonFunctional)
-                    {
-                        mechComponentRef.DamageLevel = ComponentDamageLevel.Functional;
-                    }
-                }
-
-                __runOriginal = false; // Finally, prevent firing the original method
-                return;
             }
-            catch (Exception ex)
+            finally
             {
-                SimGameState.logger.LogException(ex);
-                __runOriginal = true; // Allow original method to fire if there is an exception
+                // Clear the static field to avoid side effects.
+                MechLabPanel_LoadMech.CurrentMech = null;
+            }
+        }
+
+        private static void ProcessArmorRepairs(SimGameState sim, MechDef mech, ref WorkOrderEntry_MechLab workOrder)
+        {
+            if (!mech.NeedArmorRepair())
+                return;
+
+            foreach (var location in Globals.repairPriorities.Values)
+            {
+                var locationLoadout = mech.GetLocationLoadoutDef(location);
+                var chassisLocationDef = mech.GetChassisLocationDef(location);
+
+                int armorDifference = (int)Mathf.Abs(locationLoadout.CurrentArmor - locationLoadout.AssignedArmor);
+                if (chassisLocationDef.HasRearArmor())
+                {
+                    armorDifference += (int)Mathf.Abs(locationLoadout.CurrentRearArmor - locationLoadout.AssignedRearArmor);
+                }
+
+                if (armorDifference > 0)
+                {
+                    workOrder ??= Helpers.CreateBaseMechLabOrder(sim, mech);
+
+                    var armorWorkOrder = sim.CreateMechArmorModifyWorkOrder(
+                        mech.GUID,
+                        location,
+                        armorDifference,
+                        (int)locationLoadout.AssignedArmor,
+                        (int)locationLoadout.AssignedRearArmor
+                    );
+
+                    // Reset assigned armor to prevent free armor reset.
+                    locationLoadout.AssignedArmor = Mathf.CeilToInt(locationLoadout.CurrentArmor);
+                    locationLoadout.AssignedRearArmor = Mathf.CeilToInt(locationLoadout.CurrentRearArmor);
+
+                    workOrder.AddSubEntry(armorWorkOrder);
+                }
             }
         }
     }
-
-
-
-    /* Patch CreateMechArmorModifyWorkOrder so we can apply tonnage modifiers to armor work orders in the game
-     *  The intent of this is to make light mechs cheaper to repair armor on compared with heavy/assault mechs. It can be disabled in the mod.json settings.
-     */
-
-    /* Patch CreateMechRepairWorkOrder so we can apply tonnage modifiers to structure repair work orders in the game
-     *  The intent of this is to make light mechs cheaper to repair structure on compared with heavy/assault mechs. It can be disabled in the mod.json settings.
-     *  
-     */
-
-
-    /* [FIX] Patch WorkOrderEntry_ModifyMechArmor so we can apply our armor tech cost modifier 
-     *  
-     *  techCostModifier is used to reduce the overall tech cost for armor work orders
-     *      PROBLEM: 
-     *      HBS exposed ArmorInstallTechCost in SimGameConstants but it's an int, rather than a float.
-     *      
-     *      By default this means when we set it to even the lowest possible int value (1), armor install tech costs are still calculated at unitsLost * ArmorInstallTechCost = techCost. 
-     *      This results in even the lowest integer (1) setting causing armor units to be over 3x more expensive than the default cost of structure units! It's too much even late game with lots of mechtechs.
-     *      
-     *      WORKAROUND:
-     *      The workaround for this is to modify the game's calculated techCost for armor Work Oroders by * 0.01f, reducing it by a factor of 100 as a base.
-     *      This effectively turns the SimGameConstants integer into a usable float without having to modify shit tons of references or doing anything too messy. 
-     *      
-     *      The player can then modify the ultimate tech cost for armor by setting the SimGameConstants.ArmorInstallTechCost integer as normal. 
-     *      An ArmorInstallTechCost setting of 10 in SimGameConstants will now be equivalent to a StructureRepairTechCost of 0.1 (vanilla default for structure units is 0.3 for balancing illustration)
-    */
-
-
-    /* [FIX] Patch into ML_RepairMech to prevent structure repair work orders from resetting armor
-     *  HBS hardcoded structure repairs to reset armor because reasons
-     *  
-     *  This must prevent ML_RepairMech from firing as it's the only way we can stop blind armor resets when mech structure is repaired
-     */
-
-    /* [FIX] UI WARNING ON DESTROYED COMPONENTS
-     * Attempting to flag up warning in Mech Bay / Mech Lab when a mech has destroyed components.
-     * 
-     * This isn't a problem in vanilla, but now we are auto repairing armour and structure and can't auto repair components easily (e.g. they might not be in stock)
-     * we now need to flag up the player that there is a problem with the mech when it has destroyed components.
-     */
-
-
-    /* [FIX] SUPPRESS YANG REPAIRS WARNING
-     * If the player has enabled Yang's notification about mech repairs in this mod, suppress the default in-game warning from spamming the player about repairs twice
-     */
-
-
-    /* TESTING / DEBUGGING
-     * Testing and debugging patches
-     * 
-     */
-
-    // Just to debug Structure WO final costs
-
-
-    /* ML_ModifyArmor executes when a work order item for modifying armor is completed, and physically sets the desired amor on the mech. 
-     *  It's not needed at this time 
-    [HarmonyPatch(typeof(SimGameState), "ML_ModifyArmor")]
-    public static class SimGameState_ML_ModifyArmor_Patch
-    {
-        private static bool Prefix(SimGameState __instance, WorkOrderEntry_ModifyMechArmor order)
-        {
-            MechDef mechByID = __instance.GetMechByID(order.MechLabParent.MechID);
-            LocationLoadoutDef locationLoadoutDef = mechByID.GetLocationLoadoutDef(order.Location);
-
-            Logger.LogDebug("ML_ModifyArmor was called with params: ");
-            Logger.LogDebug("************************************** ");
-            Logger.LogDebug("mechByID: " + mechByID.Description.Name);
-            Logger.LogDebug("CurrentArmor: " + locationLoadoutDef.CurrentArmor + " = Desired: " + (float)order.DesiredFrontArmor);
-            Logger.LogDebug("CurrentRearArmor: " + locationLoadoutDef.CurrentRearArmor + " = Desired: " + (float)order.DesiredRearArmor);
-            Logger.LogDebug("AssignedArmor: " + locationLoadoutDef.AssignedArmor + " = Desired: " + (float)order.DesiredFrontArmor);
-            Logger.LogDebug("AssignedRearArmor: " + locationLoadoutDef.AssignedRearArmor + " = Desired: " + (float)order.DesiredRearArmor);
-            Logger.LogDebug("************************************** ");
-
-            return true;
-        }
-    }*/
-
 }

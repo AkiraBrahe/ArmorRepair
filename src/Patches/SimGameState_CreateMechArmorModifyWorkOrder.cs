@@ -1,84 +1,55 @@
 ﻿using BattleTech;
 using CustomComponents;
-using System;
+using System.Linq;
 using UnityEngine;
 
 namespace ArmorRepair.Patches
 {
+    /// <summary>
+    /// Applies the repair cost modifiers for repairing armor in the mech lab.
+    /// </summary>
     [HarmonyPatch(typeof(SimGameState), "CreateMechArmorModifyWorkOrder")]
     public static class SimGameState_CreateMechArmorModifyWorkOrder
     {
-        public static void Postfix(ref SimGameState __instance,
-            ref string mechSimGameUID,
-            ref ChassisLocations location,
-            ref int armorDiff, ref int frontArmor, ref int rearArmor, ref BattleTech.WorkOrderEntry_ModifyMechArmor __result)
+        [HarmonyPostfix]
+        [HarmonyWrapSafe]
+        public static void Postfix(SimGameState __instance, string mechSimGameUID, int armorDiff, ref BattleTech.WorkOrderEntry_ModifyMechArmor __result)
         {
-            string id = string.Format("MechLab - ModifyArmor - {0}", __instance.GenerateSimGameUID());
+            // If no armor was changed, or if the work order wasn't created, do nothing.
+            if (armorDiff == 0 || __result == null)
+                return;
 
-            try
+            var mech = __instance.ActiveMechs.Values.FirstOrDefault(md => md.GUID == mechSimGameUID);
+            if (mech == null)
+                return;
+
+            (float tpmod, float cbmod) = CalculateArmorRepairModifiers(mech);
+
+            // Apply tonnage modifier if enabled.
+            float mechTonnageModifier = 1f;
+            if (Main.Settings.ScaleArmorCostByTonnage)
             {
-                float mechTonnageModifier = 1f;
-                int techCost = 0;
-                int cbillCost = 0;
-
-
-                foreach (MechDef mechDef in __instance.ActiveMechs.Values)
-                {
-                    if (mechDef.GUID == mechSimGameUID)
-                    {
-                        ArmorRepairFactor armor = null;
-                        MechComponentRef armoritem = null;
-                        foreach (var item in mechDef.Inventory)
-                        {
-                            if (item.IsCategory(Main.Settings.ArmorCategory))
-                            {
-                                armor = item.GetComponent<ArmorRepairFactor>();
-                                armoritem = item;
-                                break;
-                            }
-                        }
-
-                        float atpcost = armor?.ArmorTPCost ?? 1;
-                        float acbcost = armor?.ArmorCBCost ?? 1;
-
-
-                        if (Main.Settings.RepairCostByTag != null && Main.Settings.RepairCostByTag.Length > 0)
-                            foreach (var cost in Main.Settings.RepairCostByTag)
-                            {
-                                if (mechDef.Chassis.ChassisTags.Contains(cost.Tag))
-                                {
-                                    atpcost *= cost.ArmorTPCost;
-                                    acbcost *= cost.ArmorCBCost;
-                                }
-
-                                if (armoritem != null && armoritem.Def.ComponentTags.Contains(cost.Tag))
-                                {
-                                    atpcost *= cost.ArmorTPCost;
-                                    acbcost *= cost.ArmorCBCost;
-                                }
-
-                            }
-
-
-                        // If ScaleArmorCostByTonnage is enabled, make the mech tonnage work as a percentage tech cost reduction (95 tons = 0.95 or "95%" of the cost, 50 tons = 0.05 or "50%" of the cost etc)
-                        if (Main.Settings.ScaleArmorCostByTonnage)
-                        {
-                            mechTonnageModifier = mechDef.Chassis.Tonnage * 0.01f;
-                        }
-
-                        float locationTechCost = armorDiff * mechTonnageModifier * __instance.Constants.MechLab.ArmorInstallTechPoints * atpcost;
-                        float locationCbillCost = armorDiff * mechTonnageModifier * __instance.Constants.MechLab.ArmorInstallCost * acbcost;
-                        techCost = Mathf.CeilToInt(locationTechCost);
-                        cbillCost = Mathf.CeilToInt(locationCbillCost);
-                    }
-                }
-
-                __result = new BattleTech.WorkOrderEntry_ModifyMechArmor(id, string.Format("Modify Armor - {0}", location.ToString()), mechSimGameUID, techCost, location, frontArmor, rearArmor, cbillCost, string.Empty);
+                mechTonnageModifier = mech.Chassis.Tonnage * 0.01f;
             }
-            catch (Exception ex)
-            {
-                Main.Log.LogException(ex);
-            }
+
+            int techCost = Mathf.CeilToInt(__result.Cost * tpmod * mechTonnageModifier);
+            int cbillCost = Mathf.CeilToInt(__result.CBillCost * cbmod * mechTonnageModifier);
+
+            __result.Cost = techCost;
+            __result.CBillCost = cbillCost;
+        }
+
+        public static (float tpmod, float cbmod) CalculateArmorRepairModifiers(MechDef mech)
+        {
+            var armorItem = mech.Inventory.FirstOrDefault(item => item.IsCategory(Main.Settings.ArmorCategory));
+            var armor = armorItem?.GetComponent<ArmorRepairFactor>();
+
+            float tpmod = armor?.ArmorTPCost ?? 1f;
+            float cbmod = armor?.ArmorCBCost ?? 1f;
+
+            (float tagTpMod, float tagCbMod) = Helpers.CalculateModifiers(mech, armorItem, f => f.ArmorTPCost, f => f.ArmorCBCost);
+
+            return (tpmod * tagTpMod, cbmod * tagCbMod);
         }
     }
 }

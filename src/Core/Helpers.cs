@@ -1,14 +1,13 @@
 ﻿using BattleTech;
 using System;
-using System.Linq;
 using UnityEngine;
 
 namespace ArmorRepair
 {
-    class Helpers
+    public static class Helpers
     {
         /// <summary>
-        /// Submits a MechLab work order to the temporary queue, which will be processed later by the player.
+        /// Submits a mech lab work order to the temporary queue, which will be processed later by the player.
         /// </summary>
         public static void SubmitTempWorkOrder(WorkOrderEntry_MechLab workOrder)
         {
@@ -23,7 +22,7 @@ namespace ArmorRepair
         }
 
         /// <summary>
-        /// Submits a MechLab work order to the game's Mech Lab queue to actually be processed.
+        /// Submits a mech lab work order to the game's mech lab queue to actually be processed.
         /// </summary>
         public static void SubmitWorkOrder(SimGameState simGame, WorkOrderEntry_MechLab workOrder)
         {
@@ -41,7 +40,7 @@ namespace ArmorRepair
         }
 
         /// <summary>
-        /// Creates a base MechLab work order for a given MechDef.
+        /// Creates a base mech lab work order for a given MechDef.
         /// </summary>
         public static WorkOrderEntry_MechLab CreateBaseMechLabOrder(SimGameState __instance, MechDef mech)
         {
@@ -50,10 +49,9 @@ namespace ArmorRepair
                 string mechGUID = mech.GUID;
                 string mechName = mech.Description?.Name != null ? mech.Description.Name : "Unknown";
 
-                return new WorkOrderEntry_MechLab(
-                    WorkOrderType.MechLabGeneric,
+                return new WorkOrderEntry_MechLab(WorkOrderType.MechLabGeneric,
                     "MechLab-BaseWorkOrder",
-                    string.Format("Modify 'Mech - {0}", mechName),
+                    $"Modify 'Mech - {mechName}",
                     mechGUID,
                     0,
                     string.Format(__instance.Constants.Story.GeneralMechWorkOrderCompletedText, mechName));
@@ -66,15 +64,58 @@ namespace ArmorRepair
         }
 
         /// <summary>
+        /// Calculates the total cost modifiers for a given mech and its components based on tags.
+        /// </summary>
+        public static (float tpmod, float cbmod) CalculateModifiers(MechDef mech, MechComponentRef mechComponent, Func<dynamic, float> getTpMod, Func<dynamic, float> getCbMod)
+        {
+            float tpmod = 1f;
+            float cbmod = 1f;
+
+            if (Main.Settings.RepairCostByTag == null)
+            {
+                return (1f, 1f);
+            }
+
+            foreach (dynamic factor in Main.Settings.RepairCostByTag)
+            {
+                if (mech.Chassis.ChassisTags.Contains(factor.Tag))
+                {
+                    tpmod *= getTpMod(factor);
+                    cbmod *= getCbMod(factor);
+                }
+
+                if (mechComponent != null && mechComponent.Def.ComponentTags.Contains(factor.Tag))
+                {
+                    tpmod *= getTpMod(factor);
+                    cbmod *= getCbMod(factor);
+                }
+            }
+            return (tpmod, cbmod);
+        }
+
+        /// <summary>
+        /// Applies the given modifiers to the provided costs.
+        /// </summary>
+        public static void ApplyModifiers(ref int techCost, ref int cbillCost, float tpmod, float cbmod)
+        {
+            if (tpmod != 1f)
+            {
+                techCost = Mathf.CeilToInt(techCost * tpmod);
+            }
+
+            if (cbmod != 1f)
+            {
+                cbillCost = Mathf.CeilToInt(cbillCost * cbmod);
+            }
+        }
+
+        /// <summary>
         /// Evaluates whether a given mech needs any armor repaired.
         /// </summary>
-        public static bool CheckArmorDamage(MechDef mech)
+        public static bool NeedArmorRepair(this MechDef mech)
         {
-            bool mechNeedsRepair = false;
-
-            for (int index = 0; index < Globals.repairPriorities.Count; index++)
+            foreach (var cLoc in Globals.repairPriorities.Values)
             {
-                ChassisLocations cLoc = Globals.repairPriorities.ElementAt(index).Value;
                 LocationLoadoutDef loadout = mech.GetLocationLoadoutDef(cLoc);
 
                 int armorDifference = loadout == mech.CenterTorso || loadout == mech.RightTorso || loadout == mech.LeftTorso
@@ -82,78 +123,63 @@ namespace ArmorRepair
                     : (int)Mathf.Abs(loadout.CurrentArmor - loadout.AssignedArmor);
 
                 if (armorDifference > 0)
-                {
-                    mechNeedsRepair = true;
-                    break;
-                }
+                    return true;
             }
-
-            return mechNeedsRepair;
+            return false;
         }
 
         /// <summary>
         /// Evaluates whether a given mech needs any structure repaired.
         /// </summary>
-        public static bool CheckStructureDamage(MechDef mech)
+        public static bool NeedsStructureRepair(this MechDef mech)
         {
-            bool mechNeedsRepair = false;
-
-            for (int index = 0; index < Globals.repairPriorities.Count; index++)
+            foreach (var cLoc in Globals.repairPriorities.Values)
             {
-
-                ChassisLocations cLoc = Globals.repairPriorities.ElementAt(index).Value;
                 LocationLoadoutDef loadout = mech.GetLocationLoadoutDef(cLoc);
 
                 float currentStructure = loadout.CurrentInternalStructure;
                 float maxStructure = mech.GetChassisLocationDef(cLoc).InternalStructure;
-                int structureDifference = (int)Mathf.Abs(currentStructure - maxStructure);
 
-                if (structureDifference > 0)
-                {
-                    mechNeedsRepair = true;
-                    break;
-                }
+                if ((int)Mathf.Abs(currentStructure - maxStructure) > 0)
+                    return true;
             }
-
-            return mechNeedsRepair;
+            return false;
         }
 
         /// <summary>
         /// Evaluates whether a given mech has any destroyed components.
         /// </summary>
-        public static bool CheckDestroyedComponents(MechDef mech)
+        public static bool HasDestroyedComponents(this MechDef mech)
         {
-            bool destroyedComponents = false;
-
-            foreach (MechComponentRef mechComponentRef in mech.Inventory)
+            foreach (MechComponentRef component in mech.Inventory)
             {
-                if (mechComponentRef.DamageLevel == ComponentDamageLevel.Destroyed)
-                {
-                    destroyedComponents = true;
-                    break;
-                }
+                if (component.DamageLevel == ComponentDamageLevel.Destroyed)
+                    return true;
             }
-
-            return destroyedComponents;
+            return false;
         }
 
         /// <summary>
         /// Evaluates whether a given mech has any damaged components
         /// </summary>
-        public static bool CheckDamagedComponents(MechDef mech)
+        public static bool HasDamagedComponents(this MechDef mech)
         {
-            bool damagedComponents = false;
-
-            foreach (MechComponentRef mechComponentRef in mech.Inventory)
+            foreach (MechComponentRef component in mech.Inventory)
             {
-                if (mechComponentRef.DamageLevel == ComponentDamageLevel.Penalized)
-                {
-                    damagedComponents = true;
-                    break;
-                }
+                if (component.DamageLevel == ComponentDamageLevel.Penalized)
+                    return true;
             }
+            return false;
+        }
 
-            return damagedComponents;
+        /// <summary>
+        /// Evaluates whether a given chassis location has rear armor.
+        /// </summary>
+        public static bool HasRearArmor(this LocationDef chassisLocationDef)
+        {
+            return chassisLocationDef.Location == ChassisLocations.CenterTorso ||
+                   chassisLocationDef.Location == ChassisLocations.LeftTorso ||
+                   chassisLocationDef.Location == ChassisLocations.RightTorso;
         }
     }
 }

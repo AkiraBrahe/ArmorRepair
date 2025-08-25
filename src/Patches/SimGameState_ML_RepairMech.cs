@@ -1,39 +1,29 @@
 ﻿using BattleTech;
-using System;
 
 namespace ArmorRepair.Patches
 {
+    /// <summary>
+    /// Prevents structure repair work orders from resetting armor.
+    /// </summary>
     [HarmonyPatch(typeof(SimGameState), "ML_RepairMech")]
     public static class SimGameState_ML_RepairMech
     {
-        public static void Prefix(ref bool __runOriginal, SimGameState __instance, BattleTech.WorkOrderEntry_RepairMechStructure order)
+        [HarmonyPrefix]
+        [HarmonyWrapSafe]
+        public static void Prefix(ref bool __runOriginal, SimGameState __instance, WorkOrderEntry_RepairMechStructure workOrder)
         {
-            if (__runOriginal == false) { return; }
-            if (order.IsMechLabComplete)
-            {
+            if (__runOriginal == false) return;
+            if (workOrder.IsMechLabComplete) return;
+
+            MechDef mechByID = __instance.GetMechByID(workOrder.MechLabParent.MechID);
+            if (mechByID == null)
                 return;
-            }
-            else
-            {
-                try
-                {
-                    MechDef mechByID = __instance.GetMechByID(order.MechLabParent.MechID);
-                    if (mechByID == null)
-                    {
-                        return;
-                    }
-                    LocationLoadoutDef locationLoadoutDef = mechByID.GetLocationLoadoutDef(order.Location);
-                    locationLoadoutDef.CurrentInternalStructure = mechByID.GetChassisLocationDef(order.Location).InternalStructure;
-                    // Original method resets currentArmor to assignedArmor here for some reason! Removed them from this override
-                    mechByID.RefreshBattleValue();
-                    order.SetMechLabComplete(true);
-                    __runOriginal = false; // Prevent original method from firing
-                }
-                catch (Exception e)
-                {
-                    SimGameState.logger.LogException(e);
-                }
-            }
+
+            LocationLoadoutDef locationLoadoutDef = mechByID.GetLocationLoadoutDef(workOrder.Location);
+            locationLoadoutDef.CurrentInternalStructure = mechByID.GetChassisLocationDef(workOrder.Location).InternalStructure;
+            mechByID.RefreshBattleValue();
+            workOrder.SetMechLabComplete(true);
+            __runOriginal = false;
         }
     }
 }

@@ -1,8 +1,5 @@
-﻿using System;
+﻿using CustomComponents;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using CustomComponents;
 
 namespace ArmorRepair
 {
@@ -11,7 +8,6 @@ namespace ArmorRepair
     {
         public float ArmorTPCost { get; set; }
         public float ArmorCBCost { get; set; }
-
 
         public void OnLoaded(Dictionary<string, object> values)
         {
@@ -27,7 +23,6 @@ namespace ArmorRepair
     {
         public float StructureTPCost { get; set; }
         public float StructureCBCost { get; set; }
-
 
         public void OnLoaded(Dictionary<string, object> values)
         {

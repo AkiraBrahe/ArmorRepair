@@ -1,8 +1,10 @@
 ﻿using BattleTech;
-using UnityEngine;
 
 namespace ArmorRepair.Patches
 {
+    /// <summary>
+    /// Applies the repair cost modifiers for repairing components in the mech lab.
+    /// </summary>
     [HarmonyPatch(typeof(SimGameState), "CreateComponentRepairWorkOrder")]
     public static class SimGameState_CreateComponentRepairWorkOrder
     {
@@ -11,46 +13,14 @@ namespace ArmorRepair.Patches
         public static void Postfix(MechComponentRef mechComponent, WorkOrderEntry_RepairComponent __result)
         {
             var mech = MechLabPanel_LoadMech.CurrentMech;
-            if (mechComponent == null)
+            if (mech?.Chassis == null || mechComponent?.Def == null)
                 return;
 
-            float tpmod = 1;
-            float cbmod = 1;
-
-            foreach (var tag in Main.Settings.RepairCostByTag)
-            {
-                if (mech != null && mech.Chassis.ChassisTags.Contains(tag.Tag))
-                {
-                    tpmod *= tag.RepairTPCost;
-                    cbmod *= tag.RepairCBCost;
-                }
-
-                if (mechComponent.Def.ComponentTags.Contains(tag.Tag))
-                {
-                    tpmod *= tag.RepairTPCost;
-                    cbmod *= tag.RepairCBCost;
-                }
-
-            }
-
-            if (tpmod != 1 || cbmod != 1)
-            {
-                var trav = new Traverse(__result);
-                if (tpmod != 1)
-                {
-                    var cost = trav.Field<int>("Cost");
-                    int new_cost = Mathf.CeilToInt(cost.Value * tpmod);
-                    cost.Value = new_cost;
-                }
-
-                if (cbmod != 1)
-                {
-                    var cost = trav.Field<int>("CBillCost");
-                    int new_cost = Mathf.CeilToInt(cost.Value * cbmod);
-                    cost.Value = new_cost;
-                }
-
-            }
+            (float tpmod, float cbmod) = CalculateRepairModifiers(mech, mechComponent);
+            Helpers.ApplyModifiers(ref __result.Cost, ref __result.CBillCost, tpmod, cbmod);
         }
+
+        public static (float tpmod, float cbmod) CalculateRepairModifiers(MechDef mech, MechComponentRef mechComponent) =>
+            Helpers.CalculateModifiers(mech, mechComponent, f => f.RepairTPCost, f => f.RepairCBCost);
     }
 }
