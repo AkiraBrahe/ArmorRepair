@@ -10,19 +10,19 @@ namespace ArmorRepair.Patches
     {
         [HarmonyPrefix]
         [HarmonyWrapSafe]
-        public static void Prefix(ref bool __runOriginal, SimGameState __instance, WorkOrderEntry_RepairMechStructure workOrder)
+        public static void Prefix(ref bool __runOriginal, SimGameState __instance, WorkOrderEntry_RepairMechStructure order)
         {
             if (__runOriginal == false) return;
-            if (workOrder.IsMechLabComplete) return;
+            if (order.IsMechLabComplete) return;
 
-            MechDef mechByID = __instance.GetMechByID(workOrder.MechLabParent.MechID);
+            MechDef mechByID = __instance.GetMechByID(order.MechLabParent.MechID);
             if (mechByID == null)
                 return;
 
-            LocationLoadoutDef locationLoadoutDef = mechByID.GetLocationLoadoutDef(workOrder.Location);
-            locationLoadoutDef.CurrentInternalStructure = mechByID.GetChassisLocationDef(workOrder.Location).InternalStructure;
+            LocationLoadoutDef locationLoadoutDef = mechByID.GetLocationLoadoutDef(order.Location);
+            locationLoadoutDef.CurrentInternalStructure = mechByID.GetChassisLocationDef(order.Location).InternalStructure;
             mechByID.RefreshBattleValue();
-            workOrder.SetMechLabComplete(true);
+            order.SetMechLabComplete(true);
             __runOriginal = false;
         }
     }

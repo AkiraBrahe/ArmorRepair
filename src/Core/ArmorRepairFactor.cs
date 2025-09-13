@@ -1,7 +1,7 @@
 ﻿using CustomComponents;
 using System.Collections.Generic;
 
-namespace ArmorRepair
+namespace ArmorRepair.Core
 {
     [CustomComponent("ArmorRepair")]
     public class ArmorRepairFactor : SimpleCustomComponent, IAfterLoad

@@ -1,7 +1,7 @@
 ﻿using BattleTech;
 using System.Collections.Generic;
 
-namespace ArmorRepair
+namespace ArmorRepair.Core
 {
     class Globals
     {

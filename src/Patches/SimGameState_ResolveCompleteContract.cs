@@ -111,11 +111,10 @@ namespace ArmorRepair.Patches
 
         private static string GetMechCountDescription(int count, bool isForSkipped)
         {
-            if (count <= 0) return string.Empty;
-
-            if (isForSkipped)
-            {
-                return count switch
+            return count <= 0
+                ? string.Empty
+                : isForSkipped
+                ? count switch
                 {
                     1 => "one of the 'Mechs is damaged but has",
                     2 => "two of the 'Mechs are damaged but have",
@@ -124,11 +123,8 @@ namespace ArmorRepair.Patches
                     8 => "two lances are damaged but have",
                     12 => "all of our 'Mechs are damaged but have",
                     _ => $"{count} of the 'Mechs are damaged but have",
-                };
-            }
-            else
-            {
-                return count switch
+                }
+                : count switch
                 {
                     1 => "one of our 'Mechs was",
                     2 => "a couple of our 'Mechs were",
@@ -138,7 +134,6 @@ namespace ArmorRepair.Patches
                     12 => "all of our 'Mechs were",
                     _ => $"{count} of our 'Mechs were",
                 };
-            }
         }
 
         private static string BuildFinalPromptMessage(string mechRepairCountDisplayed, int cbills, int techDays, int skipMechCount, string skipMechCountDisplayed)

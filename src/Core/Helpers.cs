@@ -2,7 +2,7 @@
 using System;
 using UnityEngine;
 
-namespace ArmorRepair
+namespace ArmorRepair.Core
 {
     public static class Helpers
     {
@@ -66,7 +66,11 @@ namespace ArmorRepair
         /// <summary>
         /// Calculates the total cost modifiers for a given mech and its components based on tags.
         /// </summary>
-        public static (float tpmod, float cbmod) CalculateModifiers(MechDef mech, MechComponentRef mechComponent, Func<dynamic, float> getTpMod, Func<dynamic, float> getCbMod)
+        public static (float tpmod, float cbmod) CalculateModifiers(
+            MechDef mech,
+            MechComponentRef mechComponent,
+            Func<RepairCostFactor, float> getTpMod,
+            Func<RepairCostFactor, float> getCbMod)
         {
             float tpmod = 1f;
             float cbmod = 1f;
@@ -76,7 +80,7 @@ namespace ArmorRepair
                 return (1f, 1f);
             }
 
-            foreach (dynamic factor in Main.Settings.RepairCostByTag)
+            foreach (RepairCostFactor factor in Main.Settings.RepairCostByTag)
             {
                 if (mech.Chassis.ChassisTags.Contains(factor.Tag))
                 {
@@ -175,11 +179,9 @@ namespace ArmorRepair
         /// <summary>
         /// Evaluates whether a given chassis location has rear armor.
         /// </summary>
-        public static bool HasRearArmor(this LocationDef chassisLocationDef)
-        {
-            return chassisLocationDef.Location == ChassisLocations.CenterTorso ||
-                   chassisLocationDef.Location == ChassisLocations.LeftTorso ||
-                   chassisLocationDef.Location == ChassisLocations.RightTorso;
-        }
+        public static bool HasRearArmor(this LocationDef chassisLocationDef) =>
+            chassisLocationDef.Location is ChassisLocations.CenterTorso or
+                                           ChassisLocations.LeftTorso or
+                                           ChassisLocations.RightTorso;
     }
 }

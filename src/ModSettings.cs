@@ -1,18 +1,5 @@
 ﻿namespace ArmorRepair
 {
-    public struct RepairCost
-    {
-        public string Tag;
-        public float ArmorTPCost;
-        public float ArmorCBCost;
-        public float StructureTPCost;
-        public float StructureCBCost;
-        public float InstallTPCost;
-        public float InstallCBCost;
-        public float RepairTPCost;
-        public float RepairCBCost;
-    }
-
     public class ModSettings
     {
         #region logging
@@ -29,7 +16,7 @@
         public string ArmorCategory = "Armor";
         public string StructureCategory = "Structure";
 
-        public RepairCost[] RepairCostByTag;
+        public RepairCostFactor[] RepairCostByTag;
 
         public void Complete()
         {
