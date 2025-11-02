@@ -5,22 +5,31 @@
     <Version>2.0.0</Version>
   </PropertyGroup>
   <PropertyGroup>
-    <TargetFramework>net481</TargetFramework>
     <OutputType>Library</OutputType>
+    <TargetFramework>net481</TargetFramework>
     <LangVersion>latest</LangVersion>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <AssemblySearchPaths>{HintPathFromItem};$(BattleTechGameDir)\BattleTech_Data\Managed</AssemblySearchPaths>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <DebugType>embedded</DebugType>
     <DisableImplicitFrameworkReferences>true</DisableImplicitFrameworkReferences>
     <PublicizerRuntimeStrategies>Unsafe</PublicizerRuntimeStrategies>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <OutputPath>$(BattleTechGameDir)\Mods\$(AssemblyName)\</OutputPath>
-  </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
-    <OutputPath>$(BattleTechGameDir)\Mods\$(AssemblyName)\</OutputPath>
+    <OutputPath>..\$(AssemblyName)\</OutputPath>
   </PropertyGroup>
+  <Target Name="CopyFilesToModFolder" AfterTargets="Build">
+    <PropertyGroup>
+      <ModFolder>$(BattleTechGameDir)\Mods\$(AssemblyName)\</ModFolder>
+    </PropertyGroup>
+    <ItemGroup>
+      <ModFiles Include="$(TargetPath)" />
+      <ModFiles Include="$(ProjectDir)..\StreamingAssets" />
+      <ModFiles Include="$(ProjectDir)..\mod.json" />
+      <ModFiles Include="$(ProjectDir)..\README.md" />
+    </ItemGroup>
+    <Copy SourceFiles="@(ModFiles)" DestinationFolder="$(ModFolder)" SkipUnchangedFiles="false" />
+  </Target>
   <ItemGroup>
     <PackageReference Include="HarmonyX" Version="2.13.0">
       <PrivateAssets>all</PrivateAssets>
@@ -41,6 +50,7 @@
       <HintPath>$(BattleTechGameDir)\Mods\CustomComponents\CustomComponents.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json" />
+    <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="UnityEngine" />
     <Reference Include="UnityEngine.BaselibModule" />
