@@ -16,7 +16,7 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
-    <OutputPath>..\$(AssemblyName)\</OutputPath>
+    <OutputPath>..\</OutputPath>
   </PropertyGroup>
   <Target Name="CopyFilesToModFolder" AfterTargets="Build">
     <PropertyGroup>
