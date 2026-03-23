@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace ArmorRepair.Core
 {
-    class Globals
+    public class Globals
     {
         /* TEMP MECHLAB QUEUE
          * Temporary queue to hold post-battle work orders until player confirms they want them processed.

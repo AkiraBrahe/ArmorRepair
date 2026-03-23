@@ -1,4 +1,4 @@
-﻿using BattleTech;
+using BattleTech;
 using System;
 using UnityEngine;
 
@@ -6,6 +6,8 @@ namespace ArmorRepair.Core
 {
     public static class Helpers
     {
+        #region Work Orders
+
         /// <summary>
         /// Submits a mech lab work order to the temporary queue, which will be processed later by the player.
         /// </summary>
@@ -63,6 +65,10 @@ namespace ArmorRepair.Core
             }
         }
 
+        #endregion Work Orders
+
+        #region Cost Modifiers
+
         /// <summary>
         /// Calculates the total cost modifiers for a given mech and its components based on tags.
         /// </summary>
@@ -113,6 +119,10 @@ namespace ArmorRepair.Core
             }
         }
 
+        #endregion Cost Modifiers
+
+        #region Status Evaluation
+
         /// <summary>
         /// Evaluates whether a given mech needs any armor repaired.
         /// </summary>
@@ -120,7 +130,7 @@ namespace ArmorRepair.Core
         {
             foreach (var cLoc in Globals.repairPriorities.Values)
             {
-                LocationLoadoutDef loadout = mech.GetLocationLoadoutDef(cLoc);
+                var loadout = mech.GetLocationLoadoutDef(cLoc);
 
                 int armorDifference = loadout == mech.CenterTorso || loadout == mech.RightTorso || loadout == mech.LeftTorso
                     ? (int)Mathf.Abs(loadout.CurrentArmor - loadout.AssignedArmor) + (int)Mathf.Abs(loadout.CurrentRearArmor - loadout.AssignedRearArmor)
@@ -139,7 +149,7 @@ namespace ArmorRepair.Core
         {
             foreach (var cLoc in Globals.repairPriorities.Values)
             {
-                LocationLoadoutDef loadout = mech.GetLocationLoadoutDef(cLoc);
+                var loadout = mech.GetLocationLoadoutDef(cLoc);
 
                 float currentStructure = loadout.CurrentInternalStructure;
                 float maxStructure = mech.GetChassisLocationDef(cLoc).InternalStructure;
@@ -155,7 +165,7 @@ namespace ArmorRepair.Core
         /// </summary>
         public static bool HasDestroyedComponents(this MechDef mech)
         {
-            foreach (MechComponentRef component in mech.Inventory)
+            foreach (var component in mech.Inventory)
             {
                 if (component.DamageLevel == ComponentDamageLevel.Destroyed)
                     return true;
@@ -168,13 +178,17 @@ namespace ArmorRepair.Core
         /// </summary>
         public static bool HasDamagedComponents(this MechDef mech)
         {
-            foreach (MechComponentRef component in mech.Inventory)
+            foreach (var component in mech.Inventory)
             {
                 if (component.DamageLevel == ComponentDamageLevel.Penalized)
                     return true;
             }
             return false;
         }
+
+        #endregion Status Evaluation
+
+        #region Location Properties
 
         /// <summary>
         /// Evaluates whether a given chassis location has rear armor.
@@ -183,5 +197,7 @@ namespace ArmorRepair.Core
             chassisLocationDef.Location is ChassisLocations.CenterTorso or
                                            ChassisLocations.LeftTorso or
                                            ChassisLocations.RightTorso;
+
+        #endregion Location Properties
     }
 }

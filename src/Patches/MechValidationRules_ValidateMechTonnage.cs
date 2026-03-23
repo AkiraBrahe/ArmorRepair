@@ -16,7 +16,7 @@ namespace ArmorRepair.Patches
         {
             for (int i = 0; i < mechDef.Inventory.Length; i++)
             {
-                MechComponentRef component = mechDef.Inventory[i];
+                var component = mechDef.Inventory[i];
                 if (component.DamageLevel == ComponentDamageLevel.Destroyed)
                 {
                     errorMessages[MechValidationType.Underweight].Add(new Text("DESTROYED COMPONENT: 'Mech has destroyed components"));

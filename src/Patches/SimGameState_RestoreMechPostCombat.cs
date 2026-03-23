@@ -26,8 +26,8 @@ namespace ArmorRepair.Patches
                 Helpers.SubmitTempWorkOrder(newWorkOrder);
             }
 
-            // This logic is from the original method; it resets destroyed components to a functional state.
-            foreach (MechComponentRef component in mech.Inventory)
+            // Original logic: Reset destroyed components to a functional state.
+            foreach (var component in mech.Inventory)
             {
                 if (component.DamageLevel == ComponentDamageLevel.NonFunctional)
                 {

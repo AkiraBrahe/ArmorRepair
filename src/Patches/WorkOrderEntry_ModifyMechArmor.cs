@@ -12,7 +12,6 @@ namespace ArmorRepair.Patches
     public static class WorkOrderEntry_ModifyMechArmor
     {
         [HarmonyPrefix]
-        [HarmonyWrapSafe]
         public static void Prefix(ref bool __runOriginal, ref int cbillCost, ref int techCost)
         {
             if (__runOriginal == false) return;

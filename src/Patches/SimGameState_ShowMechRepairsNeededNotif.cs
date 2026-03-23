@@ -9,17 +9,13 @@ namespace ArmorRepair.Patches
     public static class SimGameState_ShowMechRepairsNeededNotif
     {
         [HarmonyPrefix]
-        public static void Prefx(ref bool __runOriginal, SimGameState __instance)
+        public static void Prefix(ref bool __runOriginal, SimGameState __instance)
         {
             if (__runOriginal == false) return;
             if (Main.Settings.EnableAutoRepairPrompt)
             {
                 __instance.CompanyStats.Set("COMPANY_NotificationViewed_BattleMechRepairsNeeded", __instance.DaysPassed);
                 __runOriginal = false;
-            }
-            else
-            {
-                __runOriginal = true;
             }
         }
     }

@@ -11,7 +11,6 @@ namespace ArmorRepair.Patches
         /// Ensures the temporary queue is cleared before processing a new contract completion.
         /// </summary>
         [HarmonyPrefix]
-        [HarmonyWrapSafe]
         public static void Prefix(ref bool __runOriginal, SimGameState __instance)
         {
             if (__runOriginal == false) return;
@@ -22,7 +21,6 @@ namespace ArmorRepair.Patches
         /// Prompts the player to approve or deny the queued mech repairs after completing a contract.
         /// </summary>
         [HarmonyPostfix]
-        [HarmonyWrapSafe]
         public static void Postfix(SimGameState __instance)
         {
             int skipMechCount = 0;
@@ -57,7 +55,7 @@ namespace ArmorRepair.Patches
             int originalCount = Globals.tempMechLabQueue.Count;
             Globals.tempMechLabQueue.RemoveAll(order =>
             {
-                MechDef mech = sim.GetMechByID(order.MechID);
+                var mech = sim.GetMechByID(order.MechID);
                 return mech.HasDestroyedComponents();
             });
             return originalCount - Globals.tempMechLabQueue.Count;
@@ -83,7 +81,7 @@ namespace ArmorRepair.Patches
                 return;
             }
 
-            // Calculate summary of total repair costs from the temp work order queue
+            // Calculate total repair costs
             int cbills = Globals.tempMechLabQueue.Sum(o => o.GetCBillCost());
             int techCost = Globals.tempMechLabQueue.Sum(o => o.GetCost());
 
@@ -154,7 +152,7 @@ namespace ArmorRepair.Patches
 
         private static void ProcessRepairsAndClearQueue(SimGameState sim)
         {
-            foreach (WorkOrderEntry_MechLab workOrder in Globals.tempMechLabQueue)
+            foreach (var workOrder in Globals.tempMechLabQueue)
             {
                 Helpers.SubmitWorkOrder(sim, workOrder);
             }

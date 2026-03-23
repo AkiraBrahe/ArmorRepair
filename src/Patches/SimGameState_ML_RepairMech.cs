@@ -15,11 +15,11 @@ namespace ArmorRepair.Patches
             if (__runOriginal == false) return;
             if (order.IsMechLabComplete) return;
 
-            MechDef mechByID = __instance.GetMechByID(order.MechLabParent.MechID);
+            var mechByID = __instance.GetMechByID(order.MechLabParent.MechID);
             if (mechByID == null)
                 return;
 
-            LocationLoadoutDef locationLoadoutDef = mechByID.GetLocationLoadoutDef(order.Location);
+            var locationLoadoutDef = mechByID.GetLocationLoadoutDef(order.Location);
             locationLoadoutDef.CurrentInternalStructure = mechByID.GetChassisLocationDef(order.Location).InternalStructure;
             mechByID.RefreshBattleValue();
             order.SetMechLabComplete(true);
