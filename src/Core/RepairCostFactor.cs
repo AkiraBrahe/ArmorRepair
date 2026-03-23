@@ -2,14 +2,9 @@ namespace ArmorRepair.Core
 {
     public class RepairCostFactor
     {
-        public string Tag { get; set; }
-        public float ArmorTPCost { get; set; }
-        public float ArmorCBCost { get; set; }
-        public float StructureTPCost { get; set; }
-        public float StructureCBCost { get; set; }
-        public float RepairTPCost { get; set; }
-        public float RepairCBCost { get; set; }
-        public float InstallTPCost { get; set; }
-        public float InstallCBCost { get; set; }
+        public string Tag { get; set; } = string.Empty;
+        public string ItemID { get; set; } = string.Empty;
+        public float TPCost { get; set; } = 1f;
+        public float CBCost { get; set; } = 1f;
     }
 }

@@ -20,18 +20,14 @@ namespace ArmorRepair
 
             try
             {
-                CustomComponents.Registry.RegisterSimpleCustomComponents(Assembly.GetExecutingAssembly());
                 Settings = JsonConvert.DeserializeObject<ModSettings>(settingsJSON) ?? new ModSettings();
                 harmony = new Harmony("io.github.citizenSnippy.ArmorRepair");
                 harmony.PatchAll(Assembly.GetExecutingAssembly());
-                Log.Log("Mod initialized!");
             }
             catch (Exception ex)
             {
                 Log.LogException(ex);
             }
-
-            Settings.Complete();
         }
     }
 }

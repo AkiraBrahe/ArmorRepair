@@ -1,5 +1,6 @@
 using BattleTech;
 using System;
+using System.Linq;
 using UnityEngine;
 
 namespace ArmorRepair.Core
@@ -70,53 +71,27 @@ namespace ArmorRepair.Core
         #region Cost Modifiers
 
         /// <summary>
-        /// Calculates the total cost modifiers for a given mech and its components based on tags.
+        /// Gets the repair cost factor for a given mech and category.
         /// </summary>
-        public static (float tpmod, float cbmod) CalculateModifiers(
-            MechDef mech,
-            MechComponentRef mechComponent,
-            Func<RepairCostFactor, float> getTpMod,
-            Func<RepairCostFactor, float> getCbMod)
+        public static RepairCostFactor GetRepairFactor(this MechDef mech, string itemPrefix)
         {
-            float tpmod = 1f;
-            float cbmod = 1f;
-
-            if (Main.Settings.RepairCostByTag == null)
+            if (!string.IsNullOrEmpty(itemPrefix))
             {
-                return (1f, 1f);
-            }
-
-            foreach (RepairCostFactor factor in Main.Settings.RepairCostByTag)
-            {
-                if (mech.Chassis.ChassisTags.Contains(factor.Tag))
+                var item = mech.Inventory.FirstOrDefault(i => i.ComponentDefID.StartsWith(itemPrefix, StringComparison.OrdinalIgnoreCase));
+                if (item != null)
                 {
-                    tpmod *= getTpMod(factor);
-                    cbmod *= getCbMod(factor);
-                }
-
-                if (mechComponent != null && mechComponent.Def.ComponentTags.Contains(factor.Tag))
-                {
-                    tpmod *= getTpMod(factor);
-                    cbmod *= getCbMod(factor);
+                    var factor = Main.Settings.RepairCostByTag.FirstOrDefault(r => r.ItemID == item.ComponentDefID);
+                    if (factor != null) return factor;
                 }
             }
-            return (tpmod, cbmod);
-        }
 
-        /// <summary>
-        /// Applies the given modifiers to the provided costs.
-        /// </summary>
-        public static void ApplyModifiers(ref int techCost, ref int cbillCost, float tpmod, float cbmod)
-        {
-            if (tpmod != 1f)
+            foreach (string tag in mech.Chassis.ChassisTags)
             {
-                techCost = Mathf.CeilToInt(techCost * tpmod);
+                var factor = Main.Settings.RepairCostByTag.FirstOrDefault(r => r.Tag == tag);
+                if (factor != null) return factor;
             }
 
-            if (cbmod != 1f)
-            {
-                cbillCost = Mathf.CeilToInt(cbillCost * cbmod);
-            }
+            return null;
         }
 
         #endregion Cost Modifiers

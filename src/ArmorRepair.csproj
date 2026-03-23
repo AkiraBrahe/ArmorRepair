@@ -24,7 +24,6 @@
     </PropertyGroup>
     <ItemGroup>
       <ModFiles Include="$(TargetPath)" />
-      <ModFiles Include="$(ProjectDir)..\StreamingAssets" />
       <ModFiles Include="$(ProjectDir)..\mod.json" />
       <ModFiles Include="$(ProjectDir)..\README.md" />
     </ItemGroup>
@@ -46,9 +45,6 @@
   <ItemGroup>
     <Reference Include="Assembly-CSharp" />
     <Reference Include="BattleTech.Common" />
-    <Reference Include="CustomComponents">
-      <HintPath>$(BattleTechGameDir)\Mods\CustomComponents\CustomComponents.dll</HintPath>
-    </Reference>
     <Reference Include="Newtonsoft.Json" />
     <Reference Include="System" />
     <Reference Include="System.Core" />

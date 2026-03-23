@@ -1,2 +1,2 @@
-﻿global using HarmonyLib;
-global using ArmorRepair.Core;
+﻿global using ArmorRepair.Core;
+global using HarmonyLib;
