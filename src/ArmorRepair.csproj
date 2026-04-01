@@ -2,7 +2,7 @@
   <PropertyGroup>
     <Title>Armor Repair</Title>
     <Copyright>Copyright © 2018</Copyright>
-    <Version>2.0.0</Version>
+    <Version>1.7.0</Version>
   </PropertyGroup>
   <PropertyGroup>
     <OutputType>Library</OutputType>

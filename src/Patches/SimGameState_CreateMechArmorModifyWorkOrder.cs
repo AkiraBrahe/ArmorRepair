@@ -24,14 +24,8 @@ namespace ArmorRepair.Patches
             float tpmod = factor?.TPCost ?? 1f;
             float cbmod = factor?.CBCost ?? 1f;
 
-            float mechTonnageModifier = 1f;
-            if (Main.Settings.ScaleArmorCostByTonnage)
-            {
-                mechTonnageModifier = mech.Chassis.Tonnage * 0.01f;
-            }
-
-            __result.Cost = Mathf.CeilToInt(__result.Cost * tpmod * mechTonnageModifier);
-            __result.CBillCost = Mathf.CeilToInt(__result.CBillCost * cbmod * mechTonnageModifier);
+            __result.Cost = Mathf.CeilToInt(__result.Cost * tpmod);
+            __result.CBillCost = Mathf.CeilToInt(__result.CBillCost * cbmod);
         }
     }
 }

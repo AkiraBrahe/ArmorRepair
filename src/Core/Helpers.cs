@@ -71,13 +71,13 @@ namespace ArmorRepair.Core
         #region Cost Modifiers
 
         /// <summary>
-        /// Gets the repair cost factor for a given mech and category.
+        /// Gets the repair cost factor for a given mech or component.
         /// </summary>
         public static RepairCostFactor GetRepairFactor(this MechDef mech, string itemPrefix)
         {
             if (!string.IsNullOrEmpty(itemPrefix))
             {
-                var item = mech.Inventory.FirstOrDefault(i => i.ComponentDefID.StartsWith(itemPrefix, StringComparison.OrdinalIgnoreCase));
+                var item = mech.Inventory.FirstOrDefault(i => i.ComponentDefID.StartsWith(itemPrefix, StringComparison.Ordinal));
                 if (item != null)
                 {
                     var factor = Main.Settings.RepairCostByTag.FirstOrDefault(r => r.ItemID == item.ComponentDefID);

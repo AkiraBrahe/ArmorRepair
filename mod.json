@@ -1,9 +1,9 @@
 {
   "Name": "ArmorRepair",
   "Enabled": true,
-  "Version": "1.1",
+  "Version": "1.7-BEX",
 
-  "Description": "Prevents mech armor lost in combat from being automatically replaced for free at the end of battle. Instead, create a work order to replace it, optionally costed by mech tonnage, as well as work orders to repair structure damage.",
+  "Description": "Prevents mech armor lost in combat from being replaced for free at the end of battle. Instead, create work orders to repair structure and armor damage, with costs based on type.",
   "Author": "Life",
   "Website": "https://github.com/citizenSnippy/ArmorRepair",
   
@@ -11,8 +11,6 @@
 
   "Settings": {
     "EnableStructureRepair": true,
-    "ScaleStructureCostByTonnage": true,
-    "ScaleArmorCostByTonnage": true,
     "EnableAutoRepairPrompt": true,
     "AutoRepairMechsWithDestroyedComponents": true,
 
@@ -21,10 +19,15 @@
 
     "RepairCostByTag": [
       {
+        "Tag": "chassis_endo",
+        "TPCost": 1.5,
+        "CBCost": 4.0
+      },
+      {
         "Tag": "chassis_ferro",
         "ItemID": "Gear_Armor_FerroFibrous",
-        "TPCost": 1.2,
-        "CBCost": 1.4
+        "TPCost": 1.5,
+        "CBCost": 2.0
       }
     ]
   }

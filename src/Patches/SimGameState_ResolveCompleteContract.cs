@@ -13,7 +13,7 @@ namespace ArmorRepair.Patches
         [HarmonyPrefix]
         public static void Prefix(ref bool __runOriginal, SimGameState __instance)
         {
-            if (__runOriginal == false) return;
+            if (__runOriginal == false || __instance == null) return;
             Globals.tempMechLabQueue.Clear();
         }
 

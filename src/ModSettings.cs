@@ -11,8 +11,6 @@ namespace ArmorRepair
         #region game
 
         public bool EnableStructureRepair { get; set; } = true;
-        public bool ScaleStructureCostByTonnage { get; set; } = true;
-        public bool ScaleArmorCostByTonnage { get; set; } = true;
         public bool EnableAutoRepairPrompt { get; set; } = true;
         public bool AutoRepairMechsWithDestroyedComponents { get; set; } = true;
 
