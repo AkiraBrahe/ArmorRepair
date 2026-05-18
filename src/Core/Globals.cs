@@ -1,4 +1,4 @@
-﻿using BattleTech;
+using BattleTech;
 using System.Collections.Generic;
 
 namespace ArmorRepair.Core
@@ -7,7 +7,6 @@ namespace ArmorRepair.Core
     {
         /* TEMP MECHLAB QUEUE
          * Temporary queue to hold post-battle work orders until player confirms they want them processed.
-         * 
          */
         public static List<WorkOrderEntry_MechLab> tempMechLabQueue = [];
 

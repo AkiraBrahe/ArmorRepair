@@ -10,22 +10,23 @@
   "DLL": "ArmorRepair.dll",
 
   "Settings": {
-    "EnableStructureRepair": true,
     "EnableAutoRepairPrompt": true,
     "AutoRepairMechsWithDestroyedComponents": true,
+    "AutoRepairStructure": true,
+    "ScaleStructureRepairTimeByTonnage": true,
 
-    "ArmorPrefix": "Gear_Armor_",
-    "StructurePrefix": "",
-
-    "RepairCostByTag": [
+    "StructureRepairCostByTag": [
       {
         "Tag": "chassis_endo",
-        "TPCost": 1.5,
-        "CBCost": 4.0
-      },
+        "WeightMultiplier": 0.5,
+        "TPCost": 2.0,
+        "CBCost": 8.0
+      }
+    ],
+    "ArmorRepairCostByTag": [
       {
         "Tag": "chassis_ferro",
-        "ItemID": "Gear_Armor_FerroFibrous",
+        "WeightMultiplier": 1.0,
         "TPCost": 1.5,
         "CBCost": 2.0
       }

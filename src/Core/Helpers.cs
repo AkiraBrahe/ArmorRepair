@@ -1,3 +1,4 @@
+using ArmorRepair.Patches;
 using BattleTech;
 using System;
 using System.Linq;
@@ -9,6 +10,91 @@ namespace ArmorRepair.Core
     {
         #region Work Orders
 
+        public static void ProcessStructureRepairs(SimGameState sim, MechDef mech, ref WorkOrderEntry_MechLab workOrder)
+        {
+            if (!Main.Settings.AutoRepairStructure || !mech.NeedsStructureRepair())
+                return;
+
+            foreach (var location in repairPriorities.Values)
+            {
+                var locationLoadout = mech.GetLocationLoadoutDef(location);
+                float currentStructure = locationLoadout.CurrentInternalStructure;
+                float definedStructure = mech.GetChassisLocationDef(location).InternalStructure;
+
+                if (currentStructure < definedStructure)
+                {
+                    workOrder ??= CreateBaseMechLabOrder(sim, mech);
+
+                    int structureDifference = (int)Mathf.Abs(currentStructure - definedStructure);
+                    var repairWorkOrder = sim.CreateMechRepairWorkOrder(mech.GUID, location, structureDifference);
+                    workOrder.AddSubEntry(repairWorkOrder);
+                }
+            }
+        }
+
+        public static void ProcessArmorRepairs(SimGameState sim, MechDef mech, ref WorkOrderEntry_MechLab workOrder)
+        {
+            if (!mech.NeedArmorRepair())
+                return;
+
+            foreach (var location in repairPriorities.Values)
+            {
+                var locationLoadout = mech.GetLocationLoadoutDef(location);
+                var chassisLocationDef = mech.GetChassisLocationDef(location);
+
+                int armorDifference = (int)Mathf.Abs(locationLoadout.CurrentArmor - locationLoadout.AssignedArmor);
+                if (chassisLocationDef.HasRearArmor())
+                {
+                    armorDifference += (int)Mathf.Abs(locationLoadout.CurrentRearArmor - locationLoadout.AssignedRearArmor);
+                }
+
+                if (armorDifference > 0)
+                {
+                    workOrder ??= CreateBaseMechLabOrder(sim, mech);
+
+                    var armorWorkOrder = sim.CreateMechArmorModifyWorkOrder(
+                        mech.GUID,
+                        location,
+                        armorDifference,
+                        (int)locationLoadout.AssignedArmor,
+                        (int)locationLoadout.AssignedRearArmor
+                    );
+
+                    // Reset assigned armor to prevent free armor reset.
+                    locationLoadout.AssignedArmor = Mathf.CeilToInt(locationLoadout.CurrentArmor);
+                    locationLoadout.AssignedRearArmor = Mathf.CeilToInt(locationLoadout.CurrentRearArmor);
+
+                    workOrder.AddSubEntry(armorWorkOrder);
+                }
+            }
+        }
+
+        public static void ProcessComponentRepairs(SimGameState sim, MechDef mech, ref WorkOrderEntry_MechLab workOrder)
+        {
+            if (!mech.HasDamagedComponents())
+                return;
+
+            MechLabPanel_LoadMech.CurrentMech = mech;
+            try
+            {
+                foreach (var component in mech.Inventory)
+                {
+                    if (component.DamageLevel == ComponentDamageLevel.Penalized)
+                    {
+                        workOrder ??= CreateBaseMechLabOrder(sim, mech);
+
+                        var repairWorkOrder = sim.CreateComponentRepairWorkOrder(component, true);
+                        workOrder.AddSubEntry(repairWorkOrder);
+                    }
+                }
+            }
+            finally
+            {
+                // Clear the static field to avoid side effects.
+                MechLabPanel_LoadMech.CurrentMech = null;
+            }
+        }
+
         /// <summary>
         /// Submits a mech lab work order to the temporary queue, which will be processed later by the player.
         /// </summary>
@@ -16,7 +102,7 @@ namespace ArmorRepair.Core
         {
             try
             {
-                Globals.tempMechLabQueue.Add(workOrder);
+                tempMechLabQueue.Add(workOrder);
             }
             catch (Exception ex)
             {
@@ -66,7 +152,120 @@ namespace ArmorRepair.Core
             }
         }
 
-        #endregion Work Orders
+        #endregion
+
+        #region Repair Prompt
+
+        public static int FilterMechsWithDestroyedComponents(SimGameState sim)
+        {
+            int originalCount = tempMechLabQueue.Count;
+            tempMechLabQueue.RemoveAll(order =>
+            {
+                var mech = sim.GetMechByID(order.MechID);
+                return mech.HasDestroyedComponents();
+            });
+            return originalCount - tempMechLabQueue.Count;
+        }
+
+        public static void ShowRepairPrompt(SimGameState sim, int mechRepairCount, int skipMechCount)
+        {
+            var notificationQueue = sim.GetInterruptQueue();
+            string skipMechCountDisplayed = GetMechCountDescription(skipMechCount, isForSkipped: true);
+
+            // If all mechs were skipped, show a simple notification.
+            if (mechRepairCount <= 0)
+            {
+                string message = $"Boss, {skipMechCountDisplayed} destroyed components. I'll leave the repairs for you to review.\n\n";
+                notificationQueue.QueuePauseNotification(
+                    "'Mech Repairs Needed",
+                    message,
+                    sim.GetCrewPortrait(SimGameCrew.Crew_Yang),
+                    string.Empty,
+                    tempMechLabQueue.Clear,
+                    "OK"
+                );
+                return;
+            }
+
+            // Calculate total repair costs
+            int cbills = tempMechLabQueue.Sum(o => o.GetCBillCost());
+            int techCost = tempMechLabQueue.Sum(o => o.GetCost());
+
+            // Calculate tech cost in days
+            int techDays = 1;
+            if (techCost > 0 && sim.MechTechSkill > 0)
+            {
+                techDays = Mathf.CeilToInt((float)techCost / sim.MechTechSkill);
+            }
+
+            string mechRepairCountDisplayed = GetMechCountDescription(mechRepairCount, isForSkipped: false);
+            string finalMessage = BuildFinalPromptMessage(mechRepairCountDisplayed, cbills, techDays, skipMechCount, skipMechCountDisplayed);
+
+            notificationQueue.QueuePauseNotification(
+                "'Mech Repairs Needed",
+                finalMessage,
+                sim.GetCrewPortrait(SimGameCrew.Crew_Yang),
+                string.Empty,
+                () => ProcessRepairsAndClearQueue(sim),
+                "Yes",
+                tempMechLabQueue.Clear,
+                "No"
+            );
+        }
+
+        internal static string GetMechCountDescription(int count, bool isForSkipped)
+        {
+            return count <= 0
+                ? string.Empty
+                : isForSkipped
+                ? count switch
+                {
+                    1 => "one of the 'Mechs is damaged but has",
+                    2 => "two of the 'Mechs are damaged but have",
+                    3 => "three of the 'Mechs are damaged but have",
+                    4 => "a whole lance is damaged but has",
+                    8 => "two lances are damaged but have",
+                    12 => "all of our 'Mechs are damaged but have",
+                    _ => $"{count} of the 'Mechs are damaged but have",
+                }
+                : count switch
+                {
+                    1 => "one of our 'Mechs was",
+                    2 => "a couple of our 'Mechs were",
+                    3 => "three of our 'Mechs were",
+                    4 => "a whole lance was",
+                    8 => "two lances were",
+                    12 => "all of our 'Mechs were",
+                    _ => $"{count} of our 'Mechs were",
+                };
+        }
+
+        internal static string BuildFinalPromptMessage(string mechRepairCountDisplayed, int cbills, int techDays, int skipMechCount, string skipMechCountDisplayed)
+        {
+            string costString = $"It'll cost <color=#DE6729>{'¢'}{cbills:n0}</color> and {techDays} days for";
+            string question = "Want my crew to get started?";
+
+            if (skipMechCount > 0)
+            {
+                string skipMessagePart = $"{skipMechCountDisplayed} destroyed components, so I'll leave those repairs to you.";
+                return $"Boss, {mechRepairCountDisplayed} damaged. {costString} these repairs. {question}\n\nAlso, {skipMessagePart}\n\n";
+            }
+            else
+            {
+                return $"Boss, {mechRepairCountDisplayed} damaged on the last engagement. {costString} the repairs. {question}";
+            }
+        }
+
+        public static void ProcessRepairsAndClearQueue(SimGameState sim)
+        {
+            foreach (var workOrder in tempMechLabQueue)
+            {
+                SubmitWorkOrder(sim, workOrder);
+            }
+            tempMechLabQueue.Clear();
+        }
+
+        #endregion
 
         #region Cost Modifiers
 
@@ -80,21 +279,21 @@ namespace ArmorRepair.Core
                 var item = mech.Inventory.FirstOrDefault(i => i.ComponentDefID.StartsWith(itemPrefix, StringComparison.Ordinal));
                 if (item != null)
                 {
-                    var factor = Main.Settings.RepairCostByTag.FirstOrDefault(r => r.ItemID == item.ComponentDefID);
+                    var factor = Main.Settings.StructureRepairCostByTag.FirstOrDefault(r => r.ItemID == item.ComponentDefID);
                     if (factor != null) return factor;
                 }
             }
 
             foreach (string tag in mech.Chassis.ChassisTags)
             {
-                var factor = Main.Settings.RepairCostByTag.FirstOrDefault(r => r.Tag == tag);
+                var factor = Main.Settings.StructureRepairCostByTag.FirstOrDefault(r => r.Tag == tag);
                 if (factor != null) return factor;
             }
 
             return null;
         }
 
-        #endregion Cost Modifiers
+        #endregion
 
         #region Status Evaluation
 
@@ -103,7 +302,7 @@ namespace ArmorRepair.Core
         /// </summary>
         public static bool NeedArmorRepair(this MechDef mech)
         {
-            foreach (var cLoc in Globals.repairPriorities.Values)
+            foreach (var cLoc in repairPriorities.Values)
             {
                 var loadout = mech.GetLocationLoadoutDef(cLoc);
 
@@ -122,7 +321,7 @@ namespace ArmorRepair.Core
         /// </summary>
         public static bool NeedsStructureRepair(this MechDef mech)
         {
-            foreach (var cLoc in Globals.repairPriorities.Values)
+            foreach (var cLoc in repairPriorities.Values)
             {
                 var loadout = mech.GetLocationLoadoutDef(cLoc);
 
@@ -161,7 +360,7 @@ namespace ArmorRepair.Core
             return false;
         }
 
-        #endregion Status Evaluation
+        #endregion
 
         #region Location Properties
 
@@ -173,6 +372,6 @@ namespace ArmorRepair.Core
                                            ChassisLocations.LeftTorso or
                                            ChassisLocations.RightTorso;
 
-        #endregion Location Properties
+        #endregion
     }
 }

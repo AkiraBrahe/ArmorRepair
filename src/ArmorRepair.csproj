@@ -18,16 +18,8 @@
     <DebugType>none</DebugType>
     <OutputPath>..\</OutputPath>
   </PropertyGroup>
-  <Target Name="CopyFilesToModFolder" AfterTargets="Build">
-    <PropertyGroup>
-      <ModFolder>$(BattleTechGameDir)\Mods\$(AssemblyName)\</ModFolder>
-    </PropertyGroup>
-    <ItemGroup>
-      <ModFiles Include="$(TargetPath)" />
-      <ModFiles Include="$(ProjectDir)..\mod.json" />
-      <ModFiles Include="$(ProjectDir)..\README.md" />
-    </ItemGroup>
-    <Copy SourceFiles="@(ModFiles)" DestinationFolder="$(ModFolder)" SkipUnchangedFiles="false" />
+  <Target Name="CopyDLLToModFolder" AfterTargets="Build">
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(BattleTechGameDir)\Mods\$(AssemblyName)\" />
   </Target>
   <ItemGroup>
     <PackageReference Include="HarmonyX" Version="2.13.0">
