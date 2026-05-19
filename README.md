@@ -1,116 +1,57 @@
-# ArmorRepair
-A BattleTech mod that introduces an armor repair mechanic into the game.
+# Armor Repair
 
-ArmorRepair does this by automatically generating Mech Bay work orders to replace any lost mech armor after battles, for a time and cost just as if you added armor to a mech in the mech bay. 
+A bespoke version of [Armor Repair](https://github.com/citizenSnippy/ArmorRepair) for BattleTech Extended Tactics.
 
-The mod also uses the same system to create automatic structural repair orders after battles (you can disable this in the mod.json settings).
+## What's Changed
 
-The intent of this mod is to provide a "Mech Fatigue" style mechanic, where mechs taking hits in battle actually costs your merc company some time and cbills to sort out. This ultimately should slow the pace
-of snowballing in a campaign, and with the repairs scaled by tonnage it will also help other mods in creating a more meaningful decision over which mechs to take, and to risk, on different missions.
+### ✨ Repair Costs
 
+* **Set repair costs to tabletop values.**
 
-## Requirements
-* install [BattleTechModLoader](https://github.com/Mpstark/BattleTechModLoader/releases) using the [instructions here](https://github.com/Mpstark/BattleTechModLoader)
-* install [ModTek](https://github.com/Mpstark/ModTek/releases) using the [instructions here](https://github.com/Mpstark/ModTek)
-* install [CustomComponents](https://github.com/BattletechModders/CustomComponents/releases)
+The mod uses the same armor and structure repair costs as tabletop, with Endo Steel and Ferro-Fibrous armor being much more expensive to repair than standard structure and armor.
 
-## Recommended Mods
-* TBC pending real play testing :)
+Compared to Vanilla/BEX, repairs are now significantly cheaper in both time and C-Bills, but the costs add up quickly on each mission now that armor is not reapplied for free.
 
-## Features
-- Armor loss now matters
-- Less busywork with basic repairs... Let Yang take care of typical armor/structure repairs.
-- Automated repair work orders can be cancelled safely, and will refund any sub items not paid for.
-- Scales both structure and armor costs with the mech tonnage, making Light mechs more cost effective on milk runs, and taking Heavy/Assault mechs more of a consideration than the only choice.
+  <details>
+    <summary>Vanilla/BEX vs Armor Repair</summary>
 
-## IMPORTANT NOTES
-* Armor Tech Costs:
-	* The vanilla SimGameConstants setting `ArmorInstallTechPoints` had to be increased in this mod by a factor of 100 to make armor repairs work correctly. 
-	* This is because Harebrained Schemes set it up as an integer (a whole number). By default, even setting it to its lowest usable integer value (1) resulted in massive armor modification / repair times, and we needed much more flexibility than that overall.
-	* When tweaking this setting in SimGameConstants while using this mod, bear in mind it needs to be much higher than it would be in vanilla. For example, an `ArmorInstallTechPoints` setting of 100 with this mod would be equal to 1 in vanilla.
-* Disabling Mech Tonnage Cost Scaling:
-	* If you disable the `scaleStructureCostByTonnage` or `scaleArmorCostByTonnage` functionality, remember to lower the relevant costs in the mod's SimGameConstants.json accordingly.
-* Unused Tonnage warnings in Mech Bay:
-	* We have had to use the Unused Tonnage warning symbol in the mech bay to flag up when a mech's repair work orders have been completed, but the mech has damaged components on it (e.g. a destroyed heatsink)
-	* This is just because it was easily available, and HBS don't specifically have a warning flag or check for destroyed components, and otherwise it wasn't obvious to the player something was wrong with the mech.
+    Taking a 100-ton mech with standard structure and armor:
+    * Repairing one ton of structure damage now costs 4,000 C-Bills (38,050 C-Bills in Vanilla/BEX).
+    * Repairing one ton of armor damage now costs 10,000 C-Bills (0 C-Bills in Vanilla/BEX).
+    
+    Taking a 100-ton mech with Endo Steel chassis and Ferro-Fibrous armor:
+    * Repairing one ton of structure damage now costs 32,000 C-Bills (38,050 C-Bills in Vanilla/BEX).
+    * Repairing one ton of armor damage now costs 20,000 C-Bills (0 C-Bills in Vanilla/BEX).
 
-## Download
-Downloads can be found on [github](https://github.com/citizenSnippy/ArmorRepair/releases).
+	> [!NOTE]
+    > Endo Steel and Ferro-Fibrous armor cost three times more before the technologies are reintroduced in 3040.
 
-## Installation
-* After installing BTML and ModTek, unpack everything from the release zip into the \BATTLETECH\Mods\ folder.
-	* This must result in you having a folder called \BATTLETECH\Mods\ArmorRepair\ with the ArmorRepair.dll file in it, otherwise the mod has not been unpacked correctly!
-* If you want to enable / disable mod features like automatic structure repair orders, or mech tonnage scaling, edit the Settings in the mod.json file.
-* If you want to adjust the Armor / Structure costs, you'll need to edit \Mods\ArmorRepair\StreamingAssets\data\simGameConstants\SimGameConstants.json
-* Start the game.
+  </details>
 
-## CustomComponents
+### ✨ Tonnage Scaling
 
-### ArmorRepair
-Control cost of armor repair, set by armor item. Parameters
-Setting | Default | Description
---- | --- | ---
-ArmorTPCost | 1 | multiplier for armor repair techpoints cost
-ArmorCBCost | 1 | multiplier for armor repair cbills cost
+* **Changed tonnage scaling for structure repairs to be more lenient than BEX.**
 
-### StructureRepair
-Control cost of structure repair, set by structure item. Parameters
-Setting | Default | Description
---- | --- | ---
-StructureTPCost | 1 | multiplier for structure repair techpoints cost
-StructureCBCost | 1 | multiplier for structure repair cbills cost
+The mod increases structure repair times by 1-4x based on mech tonnage. This ensures that heavier mechs take longer to repair, but not as long as BEX, while maintaining tabletop structure repair costs.
 
-## Repair Cost By Tag
+## Usage
 
-You can use tags to change repair cost of armor or structure. Tags sets on chassis(work for both armor and structure), armor item(only armor repair cost affected) or structure item(only structure repair)
+### Installation
 
-Also you can use tags to change repair or install cost of components. Tags sets on chassis and/or component
+Download the [latest release](https://github.com/AkiraBrahe/ArmorRepair/releases/latest) of the mod and unpack it into your `Battletech\Mods` folder after installing BattleTech Extended Tactics.
 
-This values are Multiplicative. So if you for example add two tags with ArmorTPCost = 1.5 and ArmorTPCost = 0.5 and chassis/affected item have both it got 1.5 * 0.5 = 0.75 of base TP cost for armor repair
+> [!NOTE]
+> Advanced MechLab integrates and expands on Armor Repair, making it incompatible.
 
-To set flag use  RepairCostByTag parameter in mod.json. This is a list of RepairCost records with given parameters(if multipliers is lower or equal 0 - it will be replaced with 1)
-```
-		"RepairCostByTag" : [
-			{
-				"Tag" : "SOME_TEMPLATE_TAG",
-				"ArmorTPCost" : 1,
-				"ArmorCBCost" : 1,
-				"StructureTPCost" : 1,
-				"StructureCBCost" : 1,
-                "InstallTPCost" : 1,
-                "InstallCBCost" : 1,
-                "RepairTPCost" : 1,
-                "RepairCBCost" : 1
-			}
-		]
-```
+## Settings
 
-## mod.json Settings
-Setting | Type | Default | Description
---- | --- | --- | ---
-enableStructureRepair | boolean | default true | Whether to automatically issue structure damage repair work orders
-scaleStructureCostByTonnage | bool | default true | Set to false if you don't want to scale structure repair time/costs by mech tonnage
-scaleArmorCostByTonnage | bool | default true | Set to false if you don't want to scale armor repair time/costs by mech tonnage
-enableAutoRepairPrompt | bool | default true | Set to false if you don't want Yang to summarise repair costs and ask if you want him to auto-repair 'Mechs
-autoRepairMechsWithDestroyedComponents | bool | default true | Set to false to never auto-repair 'Mechs if they have destroyed components
-ArmorCategory | string | default "Armor" | CategoryID for armor item
-StructureCategory | string | default | Sttructure | CategoryID for structure item
-debug | bool | default true | Set this to false to turn off debug logging (See ArmorRepair\Log.txt)
-RepairCostByTag | list of RepairCost | default empty | set repair cost by tag
-
-
-## SimGameConstants.json Settings
-Setting | Type | Default | Description
---- | --- | --- | ---
-StructureRepairTechPoints | float | default 0.7 | Number of tech points to repair structure. With mech tonnage scaling enabled, this is a maximum - you will typically only pay 30-50% of this early game.
-StructureRepairCost | float | default 600 | Number of cbills to repair structure. With mech tonnage scaling enabled, this is a maximum - you will typically only pay 30-50% of this early game.
-ArmorInstallTechPoints | float | default 25 | Number of tech points to repair armor (remember this is divided by 100 so this is equivalent 0.35 of StructureRepairTechPoints. With mech tonnage scaling enabled, this is a maximum - you will typically only pay 30-50% of this early game. 
-ArmorInstallCost | float | default 150 | Number of cbills to repair armor. With mech tonnage scaling enabled, this is a maximum - you will typically only pay 30-50% of this early game.
-MechLabRefundModifier | float | default 1.0 | This enables full refunds of work orders now that we are generating them automatically. In vanilla this is 0.9 for a 90% rebate on cancelling work orders.
-
-## Credits
-All credit to [Beaglerush](https://www.twitch.tv/beagsandjam) for the whole mod concept, and for the interesting mechanics discussions & help along the way.
-
-Many thanks to everyone over at the [BattleTech Discord](https://discord.gg/zRptMZD) - in particular Morphyum, LadyAlekto and mpstark for their assistance.
-
-Also cheers to HBS for another damn fine game!
+| Setting                                                        | Default | Description                                                                                                                                                                   |
+| :------------------------------------------------------------- | :-----: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Enable Auto-Repair Prompt                                      | True    | Toggle the auto-repair prompt after each battle where Yang summarises repair costs and asks if you want him to auto-repair your mechs.                                       |
+| Auto-Repair Mechs With Destroyed Components                    | True    | Toggle the auto-repair of mechs with destroyed components post battle.<br>Disabling this lets you see what components were destroyed and allows you to replace them manually. |
+| Auto-Repair Structure                                          | True    | Toggle the auto-repair of structure damage post battle.<br>Structure damage takes a long time to repair, so you may want to disable this if you are on a tight schedule.      |
+| Scale Structure Repair Time By Tonnage                         | True    | Toggle tonnage scaling on structure repair times.<br>Heavier mechs take up to 4x longer to repair when enabled.                                                               |
+| Prototype Endo Steel / Ferro-Fibrous<br>Repair Cost Multiplier | 3       | The multiplier applied when repairing Prototype Endo Steel or Ferro-Fibrous armor.                                                                                            |
+| Clan-Tech Repair Cost Multiplier                               | 1.5     | The multiplier applied when repairing Clan mechs.                                                                                                                             |
+| Armor Repair Cost By Tag                                       |         | The multipliers applied when repairing armor on mechs with a specific tag.                                                                                                    |
+| Structure Repair Cost By Tag                                   |         | The multipliers applied when repairing structure on mechs with a specific tag.                                                                                                |
