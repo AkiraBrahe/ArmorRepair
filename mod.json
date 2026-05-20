@@ -1,11 +1,10 @@
 {
   "Name": "ArmorRepair",
   "Enabled": true,
-  "Version": "1.7-BEX",
+  "Version": "2.0-BEX",
 
-  "Description": "Prevents mech armor lost in combat from being replaced for free at the end of battle. Instead, create work orders to repair structure and armor damage, with costs based on type.",
-  "Author": "Life",
-  "Website": "https://github.com/citizenSnippy/ArmorRepair",
+  "Description": "Prevents mech armor from being replaced for free after each battle.<br>Also automates the repair of mechs and changes repair costs to be based on structure and armor types.",
+  "Website": "https://github.com/AkiraBrahe/ArmorRepair",
 
   "DependsOn": [ "BT_Extended_Quirks" ],
   
