@@ -40,18 +40,18 @@ The mod increases structure repair times by 1-4x based on mech tonnage. This ens
 
 Download the [latest release](https://github.com/AkiraBrahe/ArmorRepair/releases/latest) of the mod and unpack it into your `Battletech\Mods` folder after installing BattleTech Extended Tactics.
 
-> [!NOTE]
+> [!IMPORTANT]
 > Advanced MechLab integrates and expands on Armor Repair, making it incompatible.
 
 ## Settings
 
-| Setting                                                        | Default | Description                                                                                                                                                                   |
-| :------------------------------------------------------------- | :-----: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Enable Auto-Repair Prompt                                      | True    | Toggle the auto-repair prompt after each battle where Yang summarises repair costs and asks if you want him to auto-repair your mechs.                                       |
-| Auto-Repair Mechs With Destroyed Components                    | True    | Toggle the auto-repair of mechs with destroyed components post battle.<br>Disabling this lets you see what components were destroyed and allows you to replace them manually. |
-| Auto-Repair Structure                                          | True    | Toggle the auto-repair of structure damage post battle.<br>Structure damage takes a long time to repair, so you may want to disable this if you are on a tight schedule.      |
-| Scale Structure Repair Time By Tonnage                         | True    | Toggle tonnage scaling on structure repair times.<br>Heavier mechs take up to 4x longer to repair when enabled.                                                               |
-| Prototype Endo Steel / Ferro-Fibrous<br>Repair Cost Multiplier | 3       | The multiplier applied when repairing Prototype Endo Steel or Ferro-Fibrous armor.                                                                                            |
-| Clan-Tech Repair Cost Multiplier                               | 1.5     | The multiplier applied when repairing Clan mechs.                                                                                                                             |
-| Armor Repair Cost By Tag                                       |         | The multipliers applied when repairing armor on mechs with a specific tag.                                                                                                    |
-| Structure Repair Cost By Tag                                   |         | The multipliers applied when repairing structure on mechs with a specific tag.                                                                                                |
+| Setting                                                        | Default | Description                                                                                                                                                                               |
+| :------------------------------------------------------------- | :-----: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Enable Auto-Repair Prompt                                      | True    | Toggle the auto-repair prompt after each battle where Yang summarises repair costs and asks if you want him to auto-repair your mechs.                                                    |
+| Auto-Repair Mechs With Destroyed Components                    | True    | Toggle the auto-repair of mechs with destroyed components post-battle.<br>_**Note:** Disabling this lets you see what components were destroyed and allows you to replace them manually._ |
+| Auto-Repair Structure                                          | True    | Toggle the auto-repair of structure damage post-battle.<br>_**Note:** Structure damage takes a long time to repair, so you may want to disable this if you are on a tight schedule._      |
+| Scale Structure Repair Time By Tonnage                         | True    | Toggle tonnage scaling on structure repair times.<br>_**Note:** Heavier mechs take up to 4x longer to repair when enabled._                                                               |
+| Prototype Endo Steel / Ferro-Fibrous<br>Repair Cost Multiplier | 3       | Multiplier applied when repairing Prototype Endo Steel or Ferro-Fibrous armor.                                                                                                            |
+| Clan-Tech Repair Cost Multiplier                               | 1.5     | Multiplier applied when repairing Clan mechs.                                                                                                                                             |
+| Armor Repair Cost By Tag                                       |         | Multipliers applied when repairing armor on mechs with a specific tag.                                                                                                                    |
+| Structure Repair Cost By Tag                                   |         | Multipliers applied when repairing structure on mechs with a specific tag.                                                                                                                |
