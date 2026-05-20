@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Title>Armor Repair</Title>
     <Copyright>Copyright © 2018</Copyright>
@@ -28,6 +28,7 @@
     </PackageReference>
     <PackageReference Include="Krafs.Publicizer" Version="2.3.0" />
     <Publicize Include="Assembly-CSharp" />
+    <Publicize Include="MechQuirks" />
   </ItemGroup>
   <ItemDefinitionGroup>
     <Reference>
@@ -36,6 +37,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <Reference Include="Assembly-CSharp" />
+    <Reference Include="MechQuirks">
+      <HintPath>$(BattleTechGameDir)\Mods\BT_Extended_Quirks\MechQuirks.dll</HintPath>
+    </Reference>
     <Reference Include="BattleTech.Common" />
     <Reference Include="Newtonsoft.Json" />
     <Reference Include="System" />

@@ -1,64 +1,12 @@
 using BattleTech;
 using System.Linq;
-using UnityEngine;
 
 namespace ArmorRepair.Patches
 {
-    #region Work Order Processing
-
-    /// <summary>
-    /// Applies the repair cost modifiers for repairing structure in the mech lab.
-    /// </summary>
-    [HarmonyPatch(typeof(SimGameState), "CreateMechRepairWorkOrder")]
-    public static class SimGameState_CreateMechRepairWorkOrder
-    {
-        [HarmonyPostfix]
-        public static void Postfix(SimGameState __instance, string mechSimGameUID, ref WorkOrderEntry_RepairMechStructure __result)
-        {
-            var mech = __instance.ActiveMechs.Values.FirstOrDefault(md => md.GUID == mechSimGameUID);
-            if (mech == null || __result == null)
-                return;
-
-            var factor = mech.GetRepairFactor(Main.Settings.StructurePrefix);
-            float tpmod = factor?.TPCost ?? 1f;
-            float cbmod = factor?.CBCost ?? 1f;
-
-            __result.Cost = Mathf.CeilToInt(__result.Cost * tpmod);
-            __result.CBillCost = Mathf.CeilToInt(__result.CBillCost * cbmod);
-        }
-    }
-
-    /// <summary>
-    /// Applies the repair cost modifiers for repairing armor in the mech lab.
-    /// </summary>
-    [HarmonyPatch(typeof(SimGameState), "CreateMechArmorModifyWorkOrder")]
-    public static class SimGameState_CreateMechArmorModifyWorkOrder
-    {
-        [HarmonyPostfix]
-        public static void Postfix(SimGameState __instance, string mechSimGameUID, int armorDiff, ref BattleTech.WorkOrderEntry_ModifyMechArmor __result)
-        {
-            if (armorDiff == 0 || __result == null)
-                return;
-
-            var mech = __instance.ActiveMechs.Values.FirstOrDefault(md => md.GUID == mechSimGameUID);
-            if (mech == null)
-                return;
-
-            var factor = mech.GetRepairFactor(Main.Settings.ArmorPrefix);
-            float tpmod = factor?.TPCost ?? 1f;
-            float cbmod = factor?.CBCost ?? 1f;
-
-            __result.Cost = Mathf.CeilToInt(__result.Cost * tpmod);
-            __result.CBillCost = Mathf.CeilToInt(__result.CBillCost * cbmod);
-        }
-    }
-
-    #endregion
-
     #region Combat End
 
     /// <summary>
-    /// Creates repair work orders for structure, components, and armor for each mech at the end of combat.
+    /// Creates temporary repair work orders for structure, components, and armor for each mech at the end of combat.
     /// </summary>
     [HarmonyPatch(typeof(SimGameState), "RestoreMechPostCombat")]
     public static class SimGameState_RestoreMechPostCombat
@@ -106,7 +54,7 @@ namespace ArmorRepair.Patches
         [HarmonyPrefix]
         public static void Prefix(ref bool __runOriginal, SimGameState __instance)
         {
-            if (__runOriginal == false || __instance == null) return;
+            if (!__runOriginal || __instance == null) return;
             tempMechLabQueue.Clear();
         }
 
@@ -146,6 +94,46 @@ namespace ArmorRepair.Patches
 
     #endregion
 
+    #region Work Order Processing
+
+    /// <summary>
+    /// Applies the repair cost modifiers for repairing structure in the mech lab.
+    /// </summary>
+    [HarmonyPatch(typeof(SimGameState), "CreateMechRepairWorkOrder")]
+    public static class SimGameState_CreateMechRepairWorkOrder
+    {
+        [HarmonyPostfix]
+        public static void Postfix(SimGameState __instance, string mechSimGameUID, ref WorkOrderEntry_RepairMechStructure __result)
+        {
+            var mech = __instance.ActiveMechs.Values.FirstOrDefault(md => md.GUID == mechSimGameUID);
+            if (mech == null || __result == null) return;
+
+            CalculateStructureRepairCost(__instance, mech, __result);
+        }
+    }
+
+    /// <summary>
+    /// Applies the repair cost modifiers for repairing armor in the mech lab.
+    /// </summary>
+    [HarmonyPatch(typeof(SimGameState), "CreateMechArmorModifyWorkOrder")]
+    public static class SimGameState_CreateMechArmorModifyWorkOrder
+    {
+        [HarmonyPostfix]
+        public static void Postfix(SimGameState __instance, string mechSimGameUID, int armorDiff, ref WorkOrderEntry_ModifyMechArmor __result)
+        {
+            if (armorDiff == 0 || __result == null)
+                return;
+
+            var mech = __instance.ActiveMechs.Values.FirstOrDefault(md => md.GUID == mechSimGameUID);
+            if (mech == null)
+                return;
+
+            CalculateArmorRepairCost(__instance, mech, __result);
+        }
+    }
+
+    #endregion
+
     #region Technical Fixes
 
     /// <summary>
@@ -158,7 +146,7 @@ namespace ArmorRepair.Patches
         [HarmonyWrapSafe]
         public static void Prefix(ref bool __runOriginal, SimGameState __instance, WorkOrderEntry_RepairMechStructure order)
         {
-            if (__runOriginal == false) return;
+            if (!__runOriginal) return;
             if (order.IsMechLabComplete) return;
 
             var mechByID = __instance.GetMechByID(order.MechLabParent.MechID);
@@ -182,7 +170,7 @@ namespace ArmorRepair.Patches
         [HarmonyPrefix]
         public static void Prefix(ref bool __runOriginal, SimGameState __instance)
         {
-            if (__runOriginal == false) return;
+            if (!__runOriginal) return;
             if (Main.Settings.EnableAutoRepairPrompt)
             {
                 __instance.CompanyStats.Set("COMPANY_NotificationViewed_BattleMechRepairsNeeded", __instance.DaysPassed);

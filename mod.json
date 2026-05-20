@@ -6,6 +6,8 @@
   "Description": "Prevents mech armor lost in combat from being replaced for free at the end of battle. Instead, create work orders to repair structure and armor damage, with costs based on type.",
   "Author": "Life",
   "Website": "https://github.com/citizenSnippy/ArmorRepair",
+
+  "DependsOn": [ "BT_Extended_Quirks" ],
   
   "DLL": "ArmorRepair.dll",
 
@@ -14,11 +16,14 @@
     "AutoRepairMechsWithDestroyedComponents": true,
     "AutoRepairStructure": true,
     "ScaleStructureRepairTimeByTonnage": true,
+    "PrototypeEndoFerroRepairCostMultiplier": 3.0,
+    "ClanTechRepairCostMultiplier": 1.5,
 
     "StructureRepairCostByTag": [
       {
         "Tag": "chassis_endo",
         "WeightMultiplier": 0.5,
+        "PPTMultiplier": 1.0,
         "TPCost": 2.0,
         "CBCost": 8.0
       }
@@ -27,6 +32,7 @@
       {
         "Tag": "chassis_ferro",
         "WeightMultiplier": 1.0,
+        "PPTMultiplier": 1.12,
         "TPCost": 1.5,
         "CBCost": 2.0
       }
